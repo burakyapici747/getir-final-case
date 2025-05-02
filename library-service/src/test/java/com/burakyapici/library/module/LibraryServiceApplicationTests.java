@@ -1,10 +1,10 @@
-package com.burakyapici.library.management;
+package com.burakyapici.library.module;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class LibraryManagementApplicationTests {
+class LibraryServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

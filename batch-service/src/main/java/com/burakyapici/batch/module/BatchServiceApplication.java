@@ -1,13 +1,13 @@
-package com.burakyapici.notification.service;
+package com.burakyapici.batch.module;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class NotificationServiceApplication {
+public class BatchServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(NotificationServiceApplication.class, args);
+        SpringApplication.run(BatchServiceApplication.class, args);
     }
 
 }
