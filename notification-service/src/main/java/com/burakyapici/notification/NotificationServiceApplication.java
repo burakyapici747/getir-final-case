@@ -1,4 +1,4 @@
-package com.burakyapici.notification.module;
+package com.burakyapici.notification;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
