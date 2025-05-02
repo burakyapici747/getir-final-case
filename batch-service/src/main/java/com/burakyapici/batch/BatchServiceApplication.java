@@ -1,13 +1,13 @@
-package com.burakyapici.logging.module;
+package com.burakyapici.batch;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class LoggingServiceApplication {
+public class BatchServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(LoggingServiceApplication.class, args);
+        SpringApplication.run(BatchServiceApplication.class, args);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.burakyapici.library.module;
+package com.burakyapici.library;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
