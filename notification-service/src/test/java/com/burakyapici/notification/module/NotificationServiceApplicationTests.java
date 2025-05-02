@@ -1,4 +1,4 @@
-package com.burakyapici.notification.service;
+package com.burakyapici.notification.module;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

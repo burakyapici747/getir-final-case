@@ -1,10 +1,10 @@
-package com.burakyapici.logging.service;
+package com.burakyapici.batch.module;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class LoggingServiceApplicationTests {
+class BatchServiceApplicationTests {
 
     @Test
     void contextLoads() {

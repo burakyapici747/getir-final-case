@@ -1,13 +1,13 @@
-package com.burakyapici.logging.service;
+package com.burakyapici.notification.module;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class LoggingServiceApplication {
+public class NotificationServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(LoggingServiceApplication.class, args);
+        SpringApplication.run(NotificationServiceApplication.class, args);
     }
 
 }
