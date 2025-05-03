@@ -4,8 +4,11 @@ import com.burakyapici.library.domain.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -45,7 +48,7 @@ public class User extends BaseModel {
 
     @NotNull
     @Column(name = "phone_number", nullable = false)
-    private Long phoneNumber;
+    private String phoneNumber;
 
     @Size(max = 255)
     @Column(name = "address", length = 255)
@@ -73,4 +76,9 @@ public class User extends BaseModel {
         targetEntity = Reservation.class
     )
     private Set<Reservation> reservationList = new HashSet<>();
+
+    @Transient
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(role.toGrantedAuthority());
+    }
 }

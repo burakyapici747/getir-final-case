@@ -1,6 +1,7 @@
 package com.burakyapici.library.domain.enums;
 
 import lombok.Getter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Getter
 public enum Role {
@@ -24,5 +25,9 @@ public enum Role {
 
     public String getAuthority() {
         return "ROLE_" + this.name();
+    }
+
+    public SimpleGrantedAuthority toGrantedAuthority() {
+        return new SimpleGrantedAuthority(getAuthority());
     }
 }
