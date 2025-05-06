@@ -12,8 +12,8 @@ import java.util.UUID;
 public interface BookService {
     PageableDto<BookDto> getAllBooks(int currentPage, int pageSize);
     Book getBookByIdOrElseThrow(UUID id);
-    BookDto createBook(BookCreateRequest bookCreateRequest);
     BookDetailDto getBookDetailById(UUID id);
+    BookDto createBook(BookCreateRequest bookCreateRequest);
     BookDto updateBook(UUID id, BookUpdateRequest bookUpdateRequest);
     void deleteBook(UUID id);
 }

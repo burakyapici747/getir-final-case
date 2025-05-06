@@ -47,9 +47,6 @@ public class Book extends BaseModel {
     @ManyToMany(mappedBy = "books", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private final Set<Author> author = new HashSet<>();
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = WaitList.class)
-    private final Set<WaitList> waitList = new HashSet<>();
-
     @Builder.Default
     @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinTable(
@@ -58,6 +55,9 @@ public class Book extends BaseModel {
         inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     private final Set<Genre> genres = new HashSet<>();
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = WaitList.class)
+    private final Set<WaitList> waitList = new HashSet<>();
 
     @OneToMany(
         mappedBy = "book",

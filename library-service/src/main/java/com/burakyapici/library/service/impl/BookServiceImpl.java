@@ -66,6 +66,12 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    public BookDetailDto getBookDetailById(UUID id) {
+        Book book = getBookByIdOrElseThrow(id);
+        return BookMapper.INSTANCE.bookToBookDetailDto(book);
+    }
+
+    @Override
     public BookDto createBook(BookCreateRequest bookCreateRequest) {
         validateBookForCreation(bookCreateRequest);
 
@@ -85,12 +91,6 @@ public class BookServiceImpl implements BookService {
         bookRepository.save(book);
 
         return BookMapper.INSTANCE.bookToBookDto(book);
-    }
-
-    @Override
-    public BookDetailDto getBookDetailById(UUID id) {
-        Book book = getBookByIdOrElseThrow(id);
-        return BookMapper.INSTANCE.bookToBookDetailDto(book);
     }
 
     @Override

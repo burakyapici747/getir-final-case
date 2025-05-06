@@ -37,9 +37,9 @@ public interface BookMapper {
     @Mapping(target = "copies", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "waitList", ignore = true)
     @Mapping(target = "author", source = "authorIds", qualifiedByName = "mapAuthors")
     @Mapping(target = "genres", source = "genreIds", qualifiedByName = "mapGenres")
-    @Mapping(target = "waitList", source = "waitListIds", qualifiedByName = "mapWaitLists")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateBookFromBookUpdateRequest(
         BookUpdateRequest bookUpdateRequest,
@@ -62,14 +62,6 @@ public interface BookMapper {
         return Optional.ofNullable(genreIds)
             .filter(ids -> !ids.isEmpty())
             .map(genreService::getGenresByIdsOrElseThrow)
-            .orElse(null);
-    }
-
-    @Named("mapWaitLists")
-    default Set<WaitList> mapWaitLists(Set<UUID> waitListIds, @Context WaitListService waitListService) {
-        return Optional.ofNullable(waitListIds)
-            .filter(ids -> !ids.isEmpty())
-            .map(waitListService::getWaitListsByIdsOrElseThrow)
             .orElse(null);
     }
 }

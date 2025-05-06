@@ -21,12 +21,6 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    @PostMapping
-    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<BookResponse> createBook(@RequestBody BookCreateRequest bookCreateRequest) {
-        return ResponseEntity.ok(BookMapper.INSTANCE.bookDtoToBookResponse(bookService.createBook(bookCreateRequest)));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<BookDetailResponse> getBookById(@PathVariable UUID id) {
         return ResponseEntity.ok(
@@ -46,6 +40,17 @@ public class BookController {
 
     //TODO: Search işlemi eklenecek ve Pageable kullanılacak.
 
+    @PostMapping
+    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
+    public ResponseEntity<BookResponse> createBook(@RequestBody BookCreateRequest bookCreateRequest) {
+        return ResponseEntity.ok(BookMapper.INSTANCE.bookDtoToBookResponse(bookService.createBook(bookCreateRequest)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBook(@PathVariable UUID id, @RequestBody BookCreateRequest bookCreateRequest) {
+        return ResponseEntity.ok("Book updated successfully");
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<?> deleteBook(@PathVariable UUID id) {
@@ -53,8 +58,4 @@ public class BookController {
         return ResponseEntity.ok("Book deleted successfully");
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateBook(@PathVariable UUID id, @RequestBody BookCreateRequest bookCreateRequest) {
-        return ResponseEntity.ok("Book updated successfully");
-    }
 }
