@@ -7,15 +7,18 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.UUID;
 
 @Getter
 @Builder
 public class UserDetailsImpl implements UserDetails, CredentialsContainer {
+    private final UUID id;
     private final String email;
     private String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(String email, String password, Collection<? extends GrantedAuthority> authorities) {
+    public UserDetailsImpl(UUID id, String email, String password, Collection<? extends GrantedAuthority> authorities) {
+        this.id = id;
         this.email = email;
         this.password = password;
         this.authorities = authorities;

@@ -1,5 +1,6 @@
 package com.burakyapici.library.domain.model;
 
+import com.burakyapici.library.domain.enums.PatronStatus;
 import com.burakyapici.library.domain.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -17,8 +18,8 @@ import java.util.Set;
 @Table(
     name = "users",
     uniqueConstraints = {
-            @UniqueConstraint(name = "uq_users_email", columnNames = "email"),
-            @UniqueConstraint(name = "uq_users_phone_number", columnNames = "phone_number")
+        @UniqueConstraint(name = "uq_users_email", columnNames = "email"),
+        @UniqueConstraint(name = "uq_users_phone_number", columnNames = "phone_number")
     }
 )
 @NoArgsConstructor
@@ -59,6 +60,10 @@ public class User extends BaseModel {
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "patron_status")
+    private PatronStatus patronStatus;
+
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL,
@@ -66,19 +71,42 @@ public class User extends BaseModel {
         fetch = FetchType.LAZY,
         targetEntity = Borrowing.class
     )
-    private Set<Borrowing> borrowingList = new HashSet<>();
+    private final Set<Borrowing> borrowingList = new HashSet<>();
 
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL,
         orphanRemoval = true,
         fetch = FetchType.LAZY,
-        targetEntity = Reservation.class
+        targetEntity = WaitList.class
     )
-    private Set<Reservation> reservationList = new HashSet<>();
+    private final Set<WaitList> waitLists = new HashSet<>();
 
     @Transient
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(role.toGrantedAuthority());
+    }
+
+    @Transient
+    public boolean isPatron() {
+        return role == Role.PATRON;
+    }
+
+    @Transient
+    public boolean isLibrarian() {
+        return role == Role.LIBRARIAN;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void validatePatronStatus() {
+        if (isPatron() && patronStatus == null) {
+            throw new IllegalStateException("Patron status must be set for users with Patron role");
+        }
+
+        // If the user is not a Patron, patronStatus should be null
+        if (!isPatron() && patronStatus != null) {
+            patronStatus = null; // Automatically clear patronStatus if role is not PATRON
+        }
     }
 }
