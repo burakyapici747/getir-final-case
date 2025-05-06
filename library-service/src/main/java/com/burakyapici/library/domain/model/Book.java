@@ -1,15 +1,15 @@
 package com.burakyapici.library.domain.model;
 
+import com.burakyapici.library.domain.enums.BookStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-import com.burakyapici.library.domain.enums.AvailabilityStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.NaturalId;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,49 +26,46 @@ public class Book extends BaseModel {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @NotBlank
-    @Size(max = 255)
-    @Column(nullable = false, length = 255)
-    private String author;
-
     @NaturalId
     @NotBlank
     @Size(min = 10, max = 13)
     @Column(name = "isbn", unique = true, nullable = false, length = 13)
     private String isbn;
 
-    @Column(name = "publication_date")
-    private LocalDate publicationDate;
-
-    @Size(max = 100)
-    @Column(length = 100)
-    private String genre;
-
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "availability_status", length = 20, nullable = false)
-    private AvailabilityStatus availabilityStatus;
+    @Column(name = "status", length = 20, nullable = false)
+    private BookStatus bookStatus;
 
-    @Min(0)
-    @Column(name = "total_copies", nullable = false)
-    private Integer totalCopies;
+    @Column(name = "page")
+    private int page;
 
-    @Min(0)
-    @Column(name = "available_copies", nullable = false)
-    private Integer availableCopies;
+    @Column(name = "publication_date")
+    private LocalDateTime publicationDate;
 
-    @OneToOne(cascade = CascadeType.PERSIST, orphanRemoval = true, fetch = FetchType.LAZY, targetEntity = BookDetail.class)
-    private BookDetail bookDetail;
+    @Builder.Default
+    @ManyToMany(mappedBy = "books", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private final Set<Author> author = new HashSet<>();
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = Borrowing.class)
-    private Set<Borrowing> borrowingList = new HashSet<>();
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = WaitList.class)
+    private final Set<WaitList> waitList = new HashSet<>();
+
+    @Builder.Default
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "book_genre",
+        joinColumns = @JoinColumn(name = "book_id"),
+        inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
+    private final Set<Genre> genres = new HashSet<>();
 
     @OneToMany(
-            mappedBy = "book",
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY,
-            targetEntity = Reservation.class,
-            orphanRemoval = true
+        mappedBy = "book",
+        cascade = CascadeType.ALL,
+        fetch = FetchType.LAZY,
+        orphanRemoval = true,
+        targetEntity = BookCopy.class
     )
-    private Set<Reservation> reservationList = new HashSet<>();
+    @Builder.Default
+    private final Set<BookCopy> copies = new HashSet<>();
 }
