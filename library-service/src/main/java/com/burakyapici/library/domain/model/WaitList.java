@@ -1,6 +1,6 @@
 package com.burakyapici.library.domain.model;
 
-import com.burakyapici.library.domain.enums.ReservationStatus;
+import com.burakyapici.library.domain.enums.WaitListStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,8 +12,8 @@ import java.time.OffsetDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "reservation")
-public class Reservation extends BaseModel {
+@Table(name = "wait_list")
+public class WaitList extends BaseModel {
     @ManyToOne(fetch = FetchType.LAZY, optional = false, targetEntity = Book.class)
     @JoinColumn(name = "book_id", referencedColumnName = "id", nullable=false)
     private Book book;
@@ -23,14 +23,14 @@ public class Reservation extends BaseModel {
     private User user;
 
     @Column(nullable = false)
-    private OffsetDateTime reservationDate;
+    private OffsetDateTime waitDate;
 
     @Column(nullable = false)
     private OffsetDateTime expiryDate;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private ReservationStatus status;
+    private WaitListStatus status;
 
     @Column(nullable = false)
     private boolean notificationSent;
