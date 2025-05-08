@@ -7,10 +7,7 @@ import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.dto.UserDetailDto;
 import com.burakyapici.library.domain.dto.UserDto;
 import com.burakyapici.library.domain.model.User;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
@@ -19,14 +16,14 @@ import java.util.List;
 public interface UserMapper {
     UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
-    UserDto toUserDto(User user);
-    List<UserDto> toUserDtoList(List<User> users);
+    UserDto userToUserDto(User user);
+    List<UserDto> userListToUserDtoList(List<User> users);
 
-    UserDetailDto toUserDetailDto(User user);
+    UserDetailDto userToUserDetailDto(User user);
 
-    UserDetailResponse toUserDetailResponse(UserDetailDto userDetailDto);
+    UserDetailResponse userDetailDtoToUserDetailResponse(UserDetailDto userDetailDto);
 
-    PageableResponse<UserDto> toPageableResponse(PageableDto<UserDto> pageableDto);
+    PageableResponse<UserDto> pageableDtoToPageableResponse(PageableDto<UserDto> pageableDto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", ignore = true)
@@ -35,5 +32,5 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateUserFromUserUpdateRequest(UserUpdateRequest userUpdateRequest, User user);
+    void updateUserFromUserUpdateRequest(UserUpdateRequest userUpdateRequest, @MappingTarget User user);
 }

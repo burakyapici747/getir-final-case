@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
     public PageableDto<UserDto> getAllUsers(int currentPage, int pageSize) {
         Pageable pageable = Pageable.ofSize(pageSize).withPage(currentPage);
         Page<User> allUsersPage = userRepository.findAll(pageable);
-        List<UserDto> userDtoList = UserMapper.INSTANCE.toUserDtoList(allUsersPage.getContent());
+        List<UserDto> userDtoList = UserMapper.INSTANCE.userListToUserDtoList(allUsersPage.getContent());
 
         return new PageableDto<>(
             userDtoList,
@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetailDto getUserDetailById(UUID id) {
         User user = findById(id);
-        return UserMapper.INSTANCE.toUserDetailDto(user);
+        return UserMapper.INSTANCE.userToUserDetailDto(user);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class UserServiceImpl implements UserService {
 
         UserMapper.INSTANCE.updateUserFromUserUpdateRequest(userUpdateRequest, user);
 
-        return UserMapper.INSTANCE.toUserDetailDto(user);
+        return UserMapper.INSTANCE.userToUserDetailDto(user);
     }
 
     @Override

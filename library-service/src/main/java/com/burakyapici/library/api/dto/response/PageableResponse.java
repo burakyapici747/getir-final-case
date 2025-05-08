@@ -1,6 +1,5 @@
 package com.burakyapici.library.api.dto.response;
 
-
 import com.burakyapici.library.domain.dto.PageableDto;
 
 import java.util.Collection;

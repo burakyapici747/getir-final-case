@@ -29,20 +29,24 @@ public class UserController {
         @RequestParam(name = "page", required = false) int currentPage,
         @RequestParam(name = "size",required = false) int pageSize
     ){
-        return ResponseEntity.ok(UserMapper.INSTANCE.toPageableResponse(userService.getAllUsers(currentPage, pageSize)));
+        return ResponseEntity.ok(
+            UserMapper.INSTANCE.pageableDtoToPageableResponse(userService.getAllUsers(currentPage, pageSize))
+        );
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<UserDetailResponse> getUserById(@PathVariable UUID id){
-        return ResponseEntity.ok(UserMapper.INSTANCE.toUserDetailResponse(userService.getUserDetailById(id)));
+        return ResponseEntity.ok(
+            UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(userService.getUserDetailById(id))
+        );
     }
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('ROLE_LIBRARIAN', 'ROLE_PATRON')")
     public ResponseEntity<UserDetailResponse> getCurrentUser(@AuthenticationPrincipal UserDetailsImpl userDetails){
         return ResponseEntity.ok(
-            UserMapper.INSTANCE.toUserDetailResponse(userService.getUserDetailById(userDetails.getId()))
+            UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(userService.getUserDetailById(userDetails.getId()))
         );
     }
 
@@ -50,7 +54,7 @@ public class UserController {
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<?> updateUser(@PathVariable UUID id, @RequestBody UserUpdateRequest userUpdateRequest){
         return ResponseEntity.ok(
-            UserMapper.INSTANCE.toUserDetailResponse(userService.updateUser(id, userUpdateRequest))
+            UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(userService.updateUser(id, userUpdateRequest))
         );
     }
 

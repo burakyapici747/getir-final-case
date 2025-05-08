@@ -96,17 +96,4 @@ public class User extends BaseModel {
     public boolean isLibrarian() {
         return role == Role.LIBRARIAN;
     }
-
-    @PrePersist
-    @PreUpdate
-    private void validatePatronStatus() {
-        if (isPatron() && patronStatus == null) {
-            throw new IllegalStateException("Patron status must be set for users with Patron role");
-        }
-
-        // If the user is not a Patron, patronStatus should be null
-        if (!isPatron() && patronStatus != null) {
-            patronStatus = null; // Automatically clear patronStatus if role is not PATRON
-        }
-    }
 }

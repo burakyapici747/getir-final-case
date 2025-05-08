@@ -10,8 +10,12 @@ import java.util.Objects;
 public class PatronStatusValidationHandler extends AbstractBorrowValidationHandler {
     @Override
     protected void performValidation(BorrowHandlerRequest request) {
-        if(Objects.nonNull(request.user()) && !PatronStatus.ACTIVE.equals(request.user().getPatronStatus())){
-            throw new PatronStatusValidationException(request.user().getPatronStatus().getDescription());
+        if(Objects.isNull(request.patron())){
+            throw new IllegalStateException("BorrowHandlerRequest must contain a Patron user.");
+        }
+
+        if(!PatronStatus.ACTIVE.equals(request.patron().getPatronStatus())){
+            throw new PatronStatusValidationException(request.patron().getPatronStatus().getDescription());
         }
     }
 }

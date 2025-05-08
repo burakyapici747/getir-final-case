@@ -38,4 +38,13 @@ public class AuthController {
     ){
         return ResponseEntity.ok(authService.register(registerRequest));
     }
+
+    //TODO: forgot-password
+    //TODO: reset-password
+    //TODO: verify-email
+    //TODO: resend-verification-email
+    //TODO: /lock-account/{userId}
+    //TODO: /unlock-account/{userId}
+    //TODO: /refresh-token
+    //TODO: /logout
 }
