@@ -4,7 +4,7 @@ import com.burakyapici.library.domain.enums.WaitListStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -23,10 +23,10 @@ public class WaitList extends BaseModel {
     private User user;
 
     @Column(nullable = false)
-    private OffsetDateTime waitDate;
+    private LocalDateTime waitDate;
 
     @Column(nullable = false)
-    private OffsetDateTime expiryDate;
+    private LocalDateTime expiryDate;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
