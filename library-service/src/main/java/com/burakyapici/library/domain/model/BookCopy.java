@@ -9,7 +9,6 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -22,7 +21,7 @@ public class BookCopy extends BaseModel {
     @NotBlank
     @Size(max = 50)
     @Column(name = "barcode", nullable = false, unique = true, length = 50)
-    private UUID barcode;
+    private String barcode;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -35,4 +34,8 @@ public class BookCopy extends BaseModel {
 
     @OneToMany(mappedBy = "bookCopy", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = Borrowing.class)
     private List<Borrowing> borrowingHistory = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "reserved_for_wait_list_id", referencedColumnName = "id")
+    private WaitList reservedForWaitList;
 }
