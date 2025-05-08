@@ -1,23 +1,27 @@
 package com.burakyapici.library.service.impl;
 
 import com.burakyapici.library.api.dto.request.BookCreateRequest;
+import com.burakyapici.library.api.dto.request.BookSearchCriteria;
 import com.burakyapici.library.api.dto.request.BookUpdateRequest;
 import com.burakyapici.library.common.mapper.BookMapper;
+import com.burakyapici.library.domain.dto.BookCopyDto;
 import com.burakyapici.library.domain.dto.BookDetailDto;
 import com.burakyapici.library.domain.dto.BookDto;
 import com.burakyapici.library.domain.dto.PageableDto;
+import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.model.Author;
 import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.Genre;
+import com.burakyapici.library.domain.repository.BookCopyRepository;
 import com.burakyapici.library.domain.repository.BookRepository;
+import com.burakyapici.library.domain.specification.BookSpecifications;
 import com.burakyapici.library.exception.BookNotFoundException;
-import com.burakyapici.library.service.AuthorService;
-import com.burakyapici.library.service.BookService;
-import com.burakyapici.library.service.GenreService;
-import com.burakyapici.library.service.WaitListService;
+import com.burakyapici.library.service.*;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,17 +35,23 @@ public class BookServiceImpl implements BookService {
     private final AuthorService authorService;
     private final GenreService genreService;
     private final WaitListService waitListService;
+    private final BookCopyService bookCopyService;
+    private final BookCopyRepository bookCopyRepository;
 
     public BookServiceImpl(
         BookRepository bookRepository,
+        @Lazy
         AuthorService authorService,
         GenreService genreService,
-        WaitListService waitListService
-    ) {
+        WaitListService waitListService,
+        BookCopyService bookCopyService,
+        BookCopyRepository bookCopyRepository) {
         this.waitListService = waitListService;
         this.bookRepository = bookRepository;
         this.authorService = authorService;
         this.genreService = genreService;
+        this.bookCopyService = bookCopyService;
+        this.bookCopyRepository = bookCopyRepository;
     }
 
     @Override
@@ -53,7 +63,7 @@ public class BookServiceImpl implements BookService {
         return new PageableDto<>(
             bookDtoList,
             allBooksPage.getTotalPages(),
-            TOTAL_ELEMENTS_PER_PAGE,
+                BookServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
             currentPage,
             allBooksPage.hasNext(),
             allBooksPage.hasPrevious()
@@ -63,6 +73,11 @@ public class BookServiceImpl implements BookService {
     @Override
     public Book getBookByIdOrElseThrow(UUID id) {
         return findById(id);
+    }
+
+    @Override
+    public PageableDto<BookCopyDto> getBookCopiesById(UUID id, int currentPage, int pageSize) {
+        return bookCopyService.getAllBookCopiesByBookId(id, currentPage, pageSize);
     }
 
     @Override
@@ -106,6 +121,31 @@ public class BookServiceImpl implements BookService {
         );
 
         return BookMapper.INSTANCE.bookToBookDto(book);
+    }
+
+    @Override
+    public PageableDto<BookDto> searchBooks(BookSearchCriteria bookSearchCriteria, int currentPage, int pageSize) {
+        Specification<Book> spec = BookSpecifications.findByCriteria(bookSearchCriteria);
+
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+
+        Page<Book> allBooksPage = bookRepository.findAll(spec, pageable);
+
+        List<BookDto> bookDtoList = BookMapper.INSTANCE.bookListToBookDtoList(allBooksPage.getContent());
+
+        return new PageableDto<>(
+            bookDtoList,
+            allBooksPage.getTotalPages(),
+            allBooksPage.getSize(),
+            allBooksPage.getNumber(),
+            allBooksPage.hasNext(),
+            allBooksPage.hasPrevious()
+        );
+    }
+
+    @Override
+    public int calculateAvailableCopiesCount(UUID bookId) {
+        return bookCopyService.countByIdAndStatus(bookId, BookCopyStatus.AVAILABLE);
     }
 
     @Override

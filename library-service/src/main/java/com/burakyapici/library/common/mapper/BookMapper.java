@@ -10,7 +10,6 @@ import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.model.Author;
 import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.Genre;
-import com.burakyapici.library.domain.model.WaitList;
 import com.burakyapici.library.service.AuthorService;
 import com.burakyapici.library.service.GenreService;
 import com.burakyapici.library.service.WaitListService;

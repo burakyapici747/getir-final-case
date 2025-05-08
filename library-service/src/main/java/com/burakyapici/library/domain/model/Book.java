@@ -9,7 +9,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.NaturalId;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +41,7 @@ public class Book extends BaseModel {
     private int page;
 
     @Column(name = "publication_date")
-    private LocalDateTime publicationDate;
+    private LocalDate publicationDate;
 
     @Builder.Default
     @ManyToMany(mappedBy = "books", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)

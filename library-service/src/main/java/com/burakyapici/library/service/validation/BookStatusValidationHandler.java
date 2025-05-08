@@ -10,8 +10,12 @@ import java.util.Objects;
 public class BookStatusValidationHandler extends AbstractBorrowValidationHandler {
     @Override
     protected void performValidation(BorrowHandlerRequest request) {
-        if(Objects.nonNull(request.book()) && !BookStatus.ACTIVE.equals(request.book().getBookStatus())){
-            throw new BookStatusValidationException(request.book().getBookStatus().getDescription());
+        if(Objects.isNull(request.book())){
+            throw new IllegalStateException("BorrowHandlerRequest must contain a Book.");
+        }
+
+        if(!BookStatus.ACTIVE.equals(request.book().getBookStatus())){
+            throw new BookStatusValidationException("Book is not available for borrowing.");
         }
     }
 }
