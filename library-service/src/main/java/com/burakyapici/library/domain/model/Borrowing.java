@@ -2,14 +2,12 @@ package com.burakyapici.library.domain.model;
 
 import com.burakyapici.library.domain.enums.BorrowStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
 @Entity
 @Table(name = "borrowing")
@@ -37,11 +35,13 @@ public class Borrowing extends BaseModel{
     @Column(name = "return_date", nullable = true)
     private LocalDateTime returnDate;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true, targetEntity = User.class)
-    @JoinColumn(name = "returned_by_staff_id", referencedColumnName = "id")
-    private User returnedByStaff;
-
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private BorrowStatus status;
+
+    @Column(name = "damage_reported_during_return", nullable = true)
+    private boolean damageReportedDuringReturn = false;
+
+    @Column(name = "damage_notes_during_return", length = 500, nullable = true)
+    private String damageNotesDuringReturn;
 }

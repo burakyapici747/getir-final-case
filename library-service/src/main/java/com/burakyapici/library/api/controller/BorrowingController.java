@@ -1,13 +1,14 @@
 package com.burakyapici.library.api.controller;
 
-import com.burakyapici.library.api.dto.request.ReturnRequest;
+import com.burakyapici.library.api.dto.request.BorrowBookCopyRequest;
+import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
+import com.burakyapici.library.domain.dto.BorrowDto;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.BorrowingService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/borrowing")
@@ -18,17 +19,23 @@ public class BorrowingController {
         this.borrowingService = borrowingService;
     }
 
-    // TODO: Patron bilgisi authentication context icerisinden alinabilir
-    @PostMapping("/{bookCopyBarcode}")
-    public ResponseEntity<String> borrowBook(
-        @PathVariable UUID bookCopyBarcode,
-        @AuthenticationPrincipal UserDetailsImpl userDetails
+    @PostMapping("/{barcode}")
+    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
+    public ResponseEntity<BorrowDto> borrowBookCopyByBarcode(
+        @PathVariable String barcode,
+        @RequestBody BorrowBookCopyRequest borrowBookCopyRequest,
+        @AuthenticationPrincipal UserDetailsImpl librarian
     ) {
-        return ResponseEntity.ok("Book borrowed successfully");
+        return ResponseEntity.ok(borrowingService.borrowBookCopyByBarcode(barcode, borrowBookCopyRequest, librarian));
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<?> returnBook(@PathVariable UUID id, @RequestBody ReturnRequest request) {
-        return null;
+    @PatchMapping("/{barcode}")
+    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
+    public ResponseEntity<?> returnBookCopyByBarcode(
+        @PathVariable String barcode,
+        @RequestBody BorrowReturnRequest request,
+        @AuthenticationPrincipal UserDetailsImpl librarian
+    ) {
+        return ResponseEntity.ok(borrowingService.returnBookCopyByBarcode(barcode, request, librarian));
     }
 }
