@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,6 +25,9 @@ public class Author extends BaseModel {
     @NotBlank
     @Size(max = 50)
     private String lastName;
+
+    @Column(name = "date-of-birth")
+    private LocalDate dateOfBirth;
 
     @ManyToMany
     @JoinTable(

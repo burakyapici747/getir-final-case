@@ -1,12 +1,22 @@
 package com.burakyapici.library.service.impl;
 
 import com.burakyapici.library.api.dto.request.AuthorCreateRequest;
+import com.burakyapici.library.api.dto.request.AuthorSearchCriteria;
+import com.burakyapici.library.api.dto.request.AuthorUpdateRequest;
 import com.burakyapici.library.common.mapper.AuthorMapper;
 import com.burakyapici.library.domain.dto.AuthorDto;
+import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.model.Author;
+import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.repository.AuthorRepository;
+import com.burakyapici.library.domain.specification.AuthorSpecifications;
 import com.burakyapici.library.exception.AuthorNotFoundException;
 import com.burakyapici.library.service.AuthorService;
+import com.burakyapici.library.service.BookService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -17,16 +27,60 @@ import java.util.stream.Collectors;
 
 @Service
 public class AuthorServiceImpl implements AuthorService {
+    private static final int TOTAL_ELEMENTS_PER_PAGE = 10;
     private final AuthorRepository authorRepository;
+    private final BookService bookService;
 
-    public AuthorServiceImpl(AuthorRepository authorRepository) {
+    public AuthorServiceImpl(AuthorRepository authorRepository, BookService bookService) {
         this.authorRepository = authorRepository;
+        this.bookService = bookService;
+    }
+
+    @Override
+    public PageableDto<AuthorDto> getAllAuthors(int currentPage, int pageSize) {
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+        Page<Author> allAuthorsPage = authorRepository.findAll(pageable);
+        List<AuthorDto> authorDtoList = AuthorMapper.INSTANCE.authorListToAuthorDtoList(allAuthorsPage.getContent());
+
+        return new PageableDto<>(
+            authorDtoList,
+            allAuthorsPage.getTotalPages(),
+            TOTAL_ELEMENTS_PER_PAGE,
+            currentPage,
+            allAuthorsPage.hasNext(),
+            allAuthorsPage.hasPrevious()
+        );
+    }
+
+    @Override
+    public PageableDto<AuthorDto> searchAuthors(AuthorSearchCriteria authorSearchCriteria, int currentPage, int pageSize) {
+        Specification<Author> spec = AuthorSpecifications.findByCriteria(authorSearchCriteria);
+
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+
+        Page<Author> allAuthorPage = authorRepository.findAll(spec, pageable);
+
+        List<AuthorDto> authorDtoList = AuthorMapper.INSTANCE.authorListToAuthorDtoList(allAuthorPage.getContent());
+
+        return new PageableDto<>(
+            authorDtoList,
+            allAuthorPage.getTotalPages(),
+            allAuthorPage.getSize(),
+            allAuthorPage.getNumber(),
+            allAuthorPage.hasNext(),
+            allAuthorPage.hasPrevious()
+        );
+    }
+
+    @Override
+    public AuthorDto getAuthorById(UUID id) {
+        Author author = findByIdOrElseThrow(id);
+        return AuthorMapper.INSTANCE.authorToAuthorDto(author);
     }
 
     @Override
     public Author getAuthorByIdOrElseThrow(UUID id) {
-        return authorRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Author not found with id: " + id));
+        return findByIdOrElseThrow(id);
     }
 
     @Override
@@ -60,12 +114,53 @@ public class AuthorServiceImpl implements AuthorService {
             .lastName(authorCreateRequest.lastName())
             .build();
 
-        return AuthorMapper.INSTANCE.toDto(authorRepository.save(author));
+        return AuthorMapper.INSTANCE.authorToAuthorDto(authorRepository.save(author));
+    }
+
+    @Override
+    public AuthorDto updateAuthor(UUID authorId, AuthorUpdateRequest AuthorUpdateRequest) {
+        Author author = getAuthorByIdOrElseThrow(authorId);
+
+        AuthorMapper.INSTANCE.updateAuthorFromAuthorUpdateRequest(AuthorUpdateRequest, author);
+
+        return AuthorMapper.INSTANCE.authorToAuthorDto(authorRepository.save(author));
+    }
+
+    @Override
+    public void addBookToAuthor(UUID authorId, UUID bookId) {
+        Author author = getAuthorByIdOrElseThrow(authorId);
+        Book book = bookService.getBookByIdOrElseThrow(bookId);
+
+        author.getBooks().stream()
+            .filter(b -> b.getId().equals(bookId))
+            .findAny()
+            .ifPresent(b -> {
+                throw new IllegalArgumentException("Book already exists in author");
+            });
+
+        author.getBooks().add(book);
+
+        authorRepository.save(author);
     }
 
     @Override
     public void deleteById(UUID id) {
         Author author = getAuthorByIdOrElseThrow(id);
         authorRepository.delete(author);
+    }
+
+    @Override
+    public void deleteBookFromAuthor(UUID authorId, UUID bookId) {
+        Author author = getAuthorByIdOrElseThrow(authorId);
+        Book book = bookService.getBookByIdOrElseThrow(bookId);
+
+        author.getBooks().removeIf(b -> b.getId().equals(book.getId()));
+
+        authorRepository.save(author);
+    }
+
+    private Author findByIdOrElseThrow(UUID id){
+        return authorRepository.findById(id)
+                .orElseThrow(() -> new AuthorNotFoundException("Author not found with id: " + id));
     }
 }
