@@ -29,7 +29,7 @@ public class AuthorController {
             @RequestParam(value = "size", defaultValue = "10") int pageSize
     ) {
         return ResponseEntity.ok(
-                AuthorMapper.INSTANCE.pageableDtoToPageableResponse(authorService.getAllAuthors(currentPage, pageSize))
+            AuthorMapper.INSTANCE.pageableDtoToPageableResponse(authorService.getAllAuthors(currentPage, pageSize))
         );
     }
 

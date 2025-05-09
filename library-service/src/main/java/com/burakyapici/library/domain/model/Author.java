@@ -6,8 +6,6 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -17,7 +15,6 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Author extends BaseModel {
-
     @NotBlank
     @Size(max = 50)
     private String firstName;
@@ -28,12 +25,4 @@ public class Author extends BaseModel {
 
     @Column(name = "date-of-birth")
     private LocalDate dateOfBirth;
-
-    @ManyToMany
-    @JoinTable(
-        name = "book_author",
-        joinColumns = @JoinColumn(name = "author_id"),
-        inverseJoinColumns = @JoinColumn(name = "book_id")
-    )
-    private Set<Book> books = new HashSet<>();
 }

@@ -131,14 +131,12 @@ public class AuthorServiceImpl implements AuthorService {
         Author author = getAuthorByIdOrElseThrow(authorId);
         Book book = bookService.getBookByIdOrElseThrow(bookId);
 
-        author.getBooks().stream()
-            .filter(b -> b.getId().equals(bookId))
-            .findAny()
+        bookService.findBookByIdAndAuthorId(bookId, authorId)
             .ifPresent(b -> {
                 throw new IllegalArgumentException("Book already exists in author");
             });
 
-        author.getBooks().add(book);
+        book.getAuthors().add(author);
 
         authorRepository.save(author);
     }
@@ -154,7 +152,10 @@ public class AuthorServiceImpl implements AuthorService {
         Author author = getAuthorByIdOrElseThrow(authorId);
         Book book = bookService.getBookByIdOrElseThrow(bookId);
 
-        author.getBooks().removeIf(b -> b.getId().equals(book.getId()));
+        bookService.findBookByIdAndAuthorId(bookId, authorId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found in author"));
+
+        book.getAuthors().remove(author);
 
         authorRepository.save(author);
     }
