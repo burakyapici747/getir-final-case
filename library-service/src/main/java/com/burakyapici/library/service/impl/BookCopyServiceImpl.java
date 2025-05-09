@@ -60,6 +60,11 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    public BookCopy saveBookCopy(BookCopy bookCopy) {
+        return bookCopyRepository.save(bookCopy);
+    }
+
+    @Override
     public PageableDto<BookCopyDto> searchBookCopies(
         BookCopySearchCriteria bookCopySearchCriteria,
         int currentPage,

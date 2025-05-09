@@ -1,6 +1,8 @@
 package com.burakyapici.library.domain.model;
 
 import com.burakyapici.library.domain.enums.BookCopyStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,13 +30,16 @@ public class BookCopy extends BaseModel {
     @Column(name = "availability_status", length = 20, nullable = false)
     private BookCopyStatus status;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false, targetEntity = Book.class)
     @JoinColumn(name = "book_id", referencedColumnName = "id")
     private Book book;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "bookCopy", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = Borrowing.class)
     private List<Borrowing> borrowingHistory = new ArrayList<>();
 
+    @JsonManagedReference
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "reserved_for_wait_list_id", referencedColumnName = "id")
     private WaitList reservedForWaitList;
