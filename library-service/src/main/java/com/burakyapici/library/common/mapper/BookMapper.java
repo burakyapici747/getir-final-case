@@ -24,20 +24,21 @@ public interface BookMapper {
 
     BookDto bookToBookDto(Book book);
     List<BookDto> bookListToBookDtoList(List<Book> books);
+
     BookDetailDto bookToBookDetailDto(Book book);
 
-
     BookResponse bookDtoToBookResponse(BookDto bookDto);
+
     BookDetailResponse bookDetailDtoToBookDetailResponse(BookDetailDto bookDetailDto);
 
     PageableResponse<BookResponse> bookPageableDtoListToPageableResponse(PageableDto<BookDto> pageableDto);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "copies", ignore = true)
+    @Mapping(target = "bookCopies", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "waitList", ignore = true)
-    @Mapping(target = "author", source = "authorIds", qualifiedByName = "mapAuthors")
+    @Mapping(target = "waitLists", ignore = true)
+    @Mapping(target = "authors", source = "authorIds", qualifiedByName = "mapAuthors")
     @Mapping(target = "genres", source = "genreIds", qualifiedByName = "mapGenres")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateBookFromBookUpdateRequest(

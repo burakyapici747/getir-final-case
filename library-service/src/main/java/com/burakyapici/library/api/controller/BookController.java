@@ -10,6 +10,8 @@ import com.burakyapici.library.api.dto.response.BookResponse;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.common.mapper.BookCopyMapper;
 import com.burakyapici.library.common.mapper.BookMapper;
+import com.burakyapici.library.domain.model.Book;
+import com.burakyapici.library.domain.repository.BookRepository;
 import com.burakyapici.library.service.BookService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,15 +29,22 @@ public class BookController {
     private final BookService bookService;
     private final Flux<BookAvailabilityUpdateEvent> bookAvailabilityFlux;
     private final Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink;
+    private final BookRepository bookRepository;
 
     public BookController(
-        BookService bookService,
-        Flux<BookAvailabilityUpdateEvent> bookAvailabilityFlux,
-        Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink
+            BookService bookService,
+            Flux<BookAvailabilityUpdateEvent> bookAvailabilityFlux,
+            Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink, BookRepository bookRepository
     ) {
         this.bookService = bookService;
         this.bookAvailabilityFlux = bookAvailabilityFlux;
         this.bookAvailabilitySink = bookAvailabilitySink;
+        this.bookRepository = bookRepository;
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Book>> getAllBooks() {
+        return ResponseEntity.ok(bookRepository.findAll());
     }
 
     @GetMapping
@@ -48,7 +58,7 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookDetailResponse> getBookById(@PathVariable UUID id) {
+    public ResponseEntity<BookDetailResponse> getBookDetailById(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(
             BookMapper.INSTANCE.bookDetailDtoToBookDetailResponse(bookService.getBookDetailById(id))
         );

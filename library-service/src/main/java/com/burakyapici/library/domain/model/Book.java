@@ -1,6 +1,7 @@
 package com.burakyapici.library.domain.model;
 
 import com.burakyapici.library.domain.enums.BookStatus;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
@@ -44,8 +45,8 @@ public class Book extends BaseModel {
     private LocalDate publicationDate;
 
     @Builder.Default
-    @ManyToMany(mappedBy = "books", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    private final Set<Author> author = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private final Set<Author> authors = new HashSet<>();
 
     @Builder.Default
     @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
@@ -56,8 +57,9 @@ public class Book extends BaseModel {
     )
     private final Set<Genre> genres = new HashSet<>();
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = WaitList.class)
-    private final Set<WaitList> waitList = new HashSet<>();
+    private final Set<WaitList> waitLists = new HashSet<>();
 
     @OneToMany(
         mappedBy = "book",
@@ -66,6 +68,7 @@ public class Book extends BaseModel {
         orphanRemoval = true,
         targetEntity = BookCopy.class
     )
+    @JsonManagedReference
     @Builder.Default
-    private final Set<BookCopy> copies = new HashSet<>();
+    private final Set<BookCopy> bookCopies = new HashSet<>();
 }

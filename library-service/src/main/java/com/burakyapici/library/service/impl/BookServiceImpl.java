@@ -25,6 +25,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -71,6 +72,12 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    public BookDetailDto getBookDetailById(UUID id) {
+        Book book = getBookByIdOrElseThrow(id);
+        return BookMapper.INSTANCE.bookToBookDetailDto(book);
+    }
+
+    @Override
     public Book getBookByIdOrElseThrow(UUID id) {
         return findById(id);
     }
@@ -78,12 +85,6 @@ public class BookServiceImpl implements BookService {
     @Override
     public PageableDto<BookCopyDto> getBookCopiesById(UUID id, int currentPage, int pageSize) {
         return bookCopyService.getAllBookCopiesByBookId(id, currentPage, pageSize);
-    }
-
-    @Override
-    public BookDetailDto getBookDetailById(UUID id) {
-        Book book = getBookByIdOrElseThrow(id);
-        return BookMapper.INSTANCE.bookToBookDetailDto(book);
     }
 
     @Override
@@ -99,7 +100,7 @@ public class BookServiceImpl implements BookService {
             .bookStatus(bookCreateRequest.bookStatus())
             .page(bookCreateRequest.page())
             .publicationDate(bookCreateRequest.publicationDate())
-            .author(Set.of(authors.toArray(Author[]::new)))
+            .authors(Set.of(authors.toArray(Author[]::new)))
             .genres(Set.of(genres.toArray(Genre[]::new)))
         .build();
 
@@ -141,6 +142,11 @@ public class BookServiceImpl implements BookService {
             allBooksPage.hasNext(),
             allBooksPage.hasPrevious()
         );
+    }
+
+    @Override
+    public Optional<Book> findBookByIdAndAuthorId(UUID bookId, UUID authorId) {
+        return bookRepository.findByIdAndAuthors_Id(bookId, authorId);
     }
 
     @Override
