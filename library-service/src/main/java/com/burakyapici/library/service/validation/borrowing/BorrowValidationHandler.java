@@ -1,4 +1,4 @@
-package com.burakyapici.library.service.validation;
+package com.burakyapici.library.service.validation.borrowing;
 
 public interface BorrowValidationHandler {
     void setNextHandler(BorrowValidationHandler nextHandler);

@@ -1,4 +1,4 @@
-package com.burakyapici.library.service.validation;
+package com.burakyapici.library.service.validation.borrowing;
 
 public abstract class AbstractBorrowValidationHandler implements BorrowValidationHandler {
     protected BorrowValidationHandler nextHandler;

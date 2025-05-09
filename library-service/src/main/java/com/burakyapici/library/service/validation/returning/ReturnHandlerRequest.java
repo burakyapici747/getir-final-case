@@ -1,15 +1,13 @@
-package com.burakyapici.library.service.validation;
+package com.burakyapici.library.service.validation.returning;
 
 import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.BookCopy;
+import com.burakyapici.library.domain.model.Borrowing;
 import com.burakyapici.library.domain.model.User;
-import com.burakyapici.library.domain.model.WaitList;
 
-import java.util.Optional;
-
-public record BorrowHandlerRequest (
+public record ReturnHandlerRequest(
     BookCopy bookCopy,
     Book book,
     User patron,
-    Optional<WaitList> waitListOptional
+    Borrowing borrowing
 ){}
