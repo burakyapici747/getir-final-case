@@ -1,11 +1,10 @@
 package com.burakyapici.library.api.dto.request;
 
+import com.burakyapici.library.domain.enums.ReturnType;
+
 import java.util.UUID;
 
 public record BorrowReturnRequest(
-    UUID bookCopyId,
     UUID patronId,
-    boolean damageReportedDuringReturn,
-    String damageNotesDuringReturn,
-    boolean isLost
+    ReturnType returnType
 ) {}

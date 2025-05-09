@@ -1,6 +1,7 @@
 package com.burakyapici.library.domain.model;
 
 import com.burakyapici.library.domain.enums.WaitListStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Table(name = "wait_list")
 public class WaitList extends BaseModel {
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false, targetEntity = Book.class)
     @JoinColumn(name = "book_id", referencedColumnName = "id", nullable=false)
     private Book book;
@@ -22,16 +24,13 @@ public class WaitList extends BaseModel {
     @JoinColumn(name="user_id", referencedColumnName = "id", nullable=false)
     private User user;
 
-    @Column(nullable = false)
-    private LocalDateTime waitDate;
+    @Column(name = "start_date",nullable = false)
+    private LocalDateTime startDate;
 
-    @Column(nullable = false)
-    private LocalDateTime expiryDate;
+    @Column(name = "end_date", nullable = true)
+    private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private WaitListStatus status;
-
-    @Column(nullable = false)
-    private boolean notificationSent;
 }

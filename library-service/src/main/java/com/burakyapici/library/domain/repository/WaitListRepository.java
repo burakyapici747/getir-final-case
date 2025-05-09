@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
@@ -17,6 +16,6 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
     List<WaitList> findByUser_Id(UUID id);
     List<WaitList> findByBook_IdAndStatus(UUID bookId, WaitListStatus status);
     List<WaitList> findByUser_IdAndStatusIn(UUID userId, Collection<WaitListStatus> statuses);
-    Optional<WaitList> findByUser_IdAndBook_IdAndStatus(UUID userId, UUID bookId, WaitListStatus status);
+    WaitList findByUser_IdAndBook_IdAndStatus(UUID userId, UUID bookId, WaitListStatus status);
     Page<WaitList> findByBook_Id(UUID bookId, Pageable pageable);
 }

@@ -15,14 +15,16 @@ import com.burakyapici.library.service.BookCopyService;
 import com.burakyapici.library.service.BorrowingService;
 import com.burakyapici.library.service.UserService;
 import com.burakyapici.library.service.WaitListService;
-import com.burakyapici.library.service.validation.BorrowHandlerRequest;
-import com.burakyapici.library.service.validation.BorrowValidationHandler;
+import com.burakyapici.library.service.validation.borrowing.BorrowHandlerRequest;
+import com.burakyapici.library.service.validation.borrowing.BorrowValidationHandler;
+import com.burakyapici.library.service.validation.returning.ReturnHandlerRequest;
+import com.burakyapici.library.service.validation.returning.ReturnValidationHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Sinks;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class BorrowingServiceImpl implements BorrowingService {
@@ -31,24 +33,31 @@ public class BorrowingServiceImpl implements BorrowingService {
     private final WaitListService waitListService;
     private final BorrowingRepository borrowingRepository;
     private final BorrowValidationHandler borrowValidationHandler;
+    private final ReturnValidationHandler returnValidationHandler;
     private final Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink;
 
     public BorrowingServiceImpl(
-            BorrowingRepository borrowingRepository,
-            BookCopyService bookCopyService,
-            WaitListService waitListService, UserService userService,
-            @Qualifier("borrowValidationChain")
-        BorrowValidationHandler borrowValidationHandler, Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink
+        BorrowingRepository borrowingRepository,
+        BookCopyService bookCopyService,
+        WaitListService waitListService,
+        UserService userService,
+        @Qualifier("borrowValidationChain")
+        BorrowValidationHandler borrowValidationHandler,
+        @Qualifier("returnValidationChain")
+        ReturnValidationHandler returnValidationHandler,
+        Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink
     ) {
         this.borrowingRepository = borrowingRepository;
         this.bookCopyService = bookCopyService;
         this.waitListService = waitListService;
         this.userService = userService;
         this.borrowValidationHandler = borrowValidationHandler;
+        this.returnValidationHandler = returnValidationHandler;
         this.bookAvailabilitySink = bookAvailabilitySink;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BorrowDto borrowBookCopyByBarcode(
         String barcode,
         BorrowBookCopyRequest borrowBookCopyRequest,
@@ -61,76 +70,99 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         Book book = bookCopy.getBook();
 
-        Optional<WaitList> waitListOptional = waitListService.getByUserIdAndBookIdAndStatus(
+        WaitList waitList = waitListService.getByUserIdAndBookIdAndStatus(
             patron.getId(),
             book.getId(),
-            WaitListStatus.WAITING
+            WaitListStatus.READY_FOR_PICKUP
         );
 
         BorrowHandlerRequest borrowHandlerRequest = new BorrowHandlerRequest(
             bookCopy,
             book,
             patron,
-            waitListOptional
+            waitList
         );
 
         borrowValidationHandler.handle(borrowHandlerRequest);
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime dueDate = now.plusDays(15);
+        LocalDateTime borrowDate = LocalDateTime.now();
+        LocalDateTime dueDate = borrowDate.plusDays(15);
 
         Borrowing borrowing = Borrowing.builder()
             .bookCopy(bookCopy)
             .user(patron)
-            .borrowDate(now)
+            .borrowDate(borrowDate)
             .dueDate(dueDate)
             .processedByStaff(librarian)
             .status(BorrowStatus.BORROWED)
         .build();
 
         bookCopy.setStatus(BookCopyStatus.CHECKED_OUT);
+        waitList.setStatus(WaitListStatus.COMPLETED);
+        waitList.setEndDate(LocalDateTime.now());
 
-        int newAvailableCount = bookCopyService.countByIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
+        waitListService.saveWaitList(waitList);
+        bookCopyService.saveBookCopy(bookCopy);
 
-        BookAvailabilityUpdateEvent event = new BookAvailabilityUpdateEvent(book.getId(), newAvailableCount);
+        Borrowing savedBorrowing = borrowingRepository.save(borrowing);
 
-        bookAvailabilitySink.emitNext(event, Sinks.EmitFailureHandler.FAIL_FAST);
+        publishBookAvailabilityUpdateEvent(bookCopy);
 
-        return BorrowMapper.INSTANCE.toDto(borrowingRepository.save(borrowing));
+        return BorrowMapper.INSTANCE.borrowToBorrowDto(savedBorrowing);
     }
 
     @Override
-    public BorrowDto returnBookCopyByBarcode(String barcode, BorrowReturnRequest borrowReturnRequest, UserDetailsImpl userDetails) {
+    public BorrowDto returnBookCopyByBarcode(
+        String barcode,
+        BorrowReturnRequest borrowReturnRequest,
+        UserDetailsImpl userDetails
+    ) {
         User patron = userService.getUserByIdOrElseThrow(borrowReturnRequest.patronId());
         User librarian = userService.getUserByIdOrElseThrow(userDetails.getId());
 
         BookCopy bookCopy = bookCopyService.getBookCopyByBarcodeOrElseThrow(barcode);
+        Book book = bookCopy.getBook();
 
         Borrowing borrowing = borrowingRepository.findByStatusAndBookCopy_BarcodeAndUser_Id(
             BorrowStatus.BORROWED,
             barcode,
             patron.getId()
-        ).orElseThrow(() -> new IllegalArgumentException("Borrowing not found"));
+        );
 
-        if(borrowReturnRequest.isLost()){
-            borrowing.setStatus(BorrowStatus.LOST);
-            bookCopy.setStatus(BookCopyStatus.LOST);
-        }else if(borrowReturnRequest.damageReportedDuringReturn()){
-            borrowing.setDamageReportedDuringReturn(true);
-            borrowing.setDamageNotesDuringReturn(borrowReturnRequest.damageNotesDuringReturn());
-            bookCopy.setStatus(BookCopyStatus.IN_REPAIR);
-        }else{
-            bookCopy.setStatus(BookCopyStatus.AVAILABLE);
-        }
+        ReturnHandlerRequest returnHandlerRequest = new ReturnHandlerRequest(
+            bookCopy,
+            book,
+            patron,
+            borrowing
+        );
 
-        LocalDateTime returnDate = LocalDateTime.now();
+        returnValidationHandler.handle(returnHandlerRequest);
 
-        borrowing = Borrowing.builder()
-            .returnDate(returnDate)
-            .processedByStaff(librarian)
+        bookCopy.setStatus(borrowReturnRequest.returnType().getBookCopyStatus());
+
+        LocalDateTime returnDateTime = LocalDateTime.now();
+
+        Borrowing returnBorrowing = Borrowing.builder()
             .bookCopy(bookCopy)
+            .returnDate(returnDateTime)
+            .processedByStaff(librarian)
+            .user(patron)
+            .status(borrowReturnRequest.returnType().getBorrowStatus())
             .build();
 
-        return BorrowMapper.INSTANCE.toDto(borrowingRepository.save(borrowing));
+        Borrowing savedReturnBorrowing = borrowingRepository.save(returnBorrowing);
+
+        publishBookAvailabilityUpdateEvent(bookCopy);
+
+        return BorrowMapper.INSTANCE.borrowToBorrowDto(savedReturnBorrowing);
+    }
+
+    private void publishBookAvailabilityUpdateEvent(BookCopy bookCopy) {
+        int newAvailableCount = bookCopyService.countByIdAndStatus(bookCopy.getBook().getId(), BookCopyStatus.AVAILABLE);
+
+        BookAvailabilityUpdateEvent event =
+                new BookAvailabilityUpdateEvent(bookCopy.getBook().getId(), newAvailableCount);
+
+        bookAvailabilitySink.emitNext(event, Sinks.EmitFailureHandler.FAIL_FAST);
     }
 }

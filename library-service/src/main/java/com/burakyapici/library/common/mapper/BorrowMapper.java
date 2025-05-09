@@ -9,6 +9,5 @@ import org.mapstruct.factory.Mappers;
 public interface BorrowMapper {
     BorrowMapper INSTANCE = Mappers.getMapper(BorrowMapper.class);
 
-
-    BorrowDto toDto(Borrowing borrow);
+    BorrowDto borrowToBorrowDto(Borrowing borrow);
 }

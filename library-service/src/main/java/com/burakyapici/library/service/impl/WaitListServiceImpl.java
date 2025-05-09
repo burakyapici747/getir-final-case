@@ -72,13 +72,9 @@ public class WaitListServiceImpl implements WaitListService {
         //TODO: Book availability (müsait kopya var mı) kontrolünü ekleyin (BookCopyService kullanarak).
         //TODO: Patron'un herhangi bir cezasi var mi kontrolu
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiryDate = now.plusDays(7);
-
         WaitList waitList = WaitList.builder()
-            .waitDate(LocalDateTime.now())
+            .startDate(LocalDateTime.now())
             .book(book)
-            .expiryDate(expiryDate)
             .status(WaitListStatus.WAITING)
             .build();
 
@@ -193,8 +189,13 @@ public class WaitListServiceImpl implements WaitListService {
     }
 
     @Override
-    public Optional<WaitList> getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus waitListStatus) {
+    public WaitList getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus waitListStatus) {
         return waitListRepository.findByUser_IdAndBook_IdAndStatus(userId, bookId, waitListStatus);
+    }
+
+    @Override
+    public WaitList saveWaitList(WaitList waitList) {
+        return waitListRepository.save(waitList);
     }
 
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {

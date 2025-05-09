@@ -1,6 +1,7 @@
 package com.burakyapici.library.domain.model;
 
 import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Borrowing extends BaseModel{
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false, targetEntity = BookCopy.class)
     @JoinColumn(name = "book_copy_id", referencedColumnName = "id")
     private BookCopy bookCopy;
@@ -37,11 +39,5 @@ public class Borrowing extends BaseModel{
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private BorrowStatus status;
-
-    @Column(name = "damage_reported_during_return", nullable = true)
-    private boolean damageReportedDuringReturn = false;
-
-    @Column(name = "damage_notes_during_return", length = 500, nullable = true)
-    private String damageNotesDuringReturn;
+    private BorrowStatus status = BorrowStatus.BORROWED;
 }
