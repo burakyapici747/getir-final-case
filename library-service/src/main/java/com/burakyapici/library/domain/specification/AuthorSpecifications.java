@@ -13,17 +13,17 @@ public class AuthorSpecifications {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (criteria.firstname() != null && !criteria.firstname().isEmpty()) {
+            if (criteria.firstName() != null && !criteria.firstName().isEmpty()) {
                 predicates.add(criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("firstname")),
-                    "%" + criteria.firstname().toLowerCase() + "%"
+                    criteriaBuilder.lower(root.get("firstName")),
+                    "%" + criteria.firstName().toLowerCase() + "%"
                 ));
             }
 
-            if (criteria.lastname() != null && !criteria.lastname().isEmpty()) {
+            if (criteria.lastName() != null && !criteria.lastName().isEmpty()) {
                 predicates.add(criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("lastname")),
-                    "%" + criteria.lastname().toLowerCase() + "%"
+                    criteriaBuilder.lower(root.get("lastName")),
+                    "%" + criteria.lastName().toLowerCase() + "%"
                 ));
             }
 

@@ -5,6 +5,7 @@ import com.burakyapici.library.api.dto.request.AuthorSearchCriteria;
 import com.burakyapici.library.api.dto.request.AuthorUpdateRequest;
 import com.burakyapici.library.common.mapper.AuthorMapper;
 import com.burakyapici.library.domain.dto.AuthorDto;
+import com.burakyapici.library.domain.dto.BookDto;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.model.Author;
 import com.burakyapici.library.domain.model.Book;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -112,6 +114,7 @@ public class AuthorServiceImpl implements AuthorService {
         Author author = Author.builder()
             .firstName(authorCreateRequest.firstName())
             .lastName(authorCreateRequest.lastName())
+            .dateOfBirth(authorCreateRequest.dateOfBirth())
             .build();
 
         return AuthorMapper.INSTANCE.authorToAuthorDto(authorRepository.save(author));
@@ -127,7 +130,7 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public void addBookToAuthor(UUID authorId, UUID bookId) {
+    public List<BookDto> addBookToAuthor(UUID authorId, UUID bookId) {
         Author author = getAuthorByIdOrElseThrow(authorId);
         Book book = bookService.getBookByIdOrElseThrow(bookId);
 
@@ -139,6 +142,8 @@ public class AuthorServiceImpl implements AuthorService {
         book.getAuthors().add(author);
 
         authorRepository.save(author);
+
+        return bookService.getAllBooksByAuthorId(authorId);
     }
 
     @Override
@@ -160,8 +165,23 @@ public class AuthorServiceImpl implements AuthorService {
         authorRepository.save(author);
     }
 
+    @Override
+    @Transactional
+    public void deleteAuthorByAuthorId(UUID authorId) {
+        validateAuthorExists(authorId);
+
+        authorRepository.deleteBookAuthorByAuthorId(authorId);
+        authorRepository.deleteById(authorId);
+    }
+
     private Author findByIdOrElseThrow(UUID id){
         return authorRepository.findById(id)
-                .orElseThrow(() -> new AuthorNotFoundException("Author not found with id: " + id));
+            .orElseThrow(() -> new AuthorNotFoundException("Author not found with id: " + id));
+    }
+
+    private void validateAuthorExists(UUID authorId) {
+        if (!authorRepository.existsById(authorId)) {
+            throw new AuthorNotFoundException("Author not found with id: " + authorId);
+        }
     }
 }

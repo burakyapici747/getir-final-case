@@ -11,7 +11,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "default")
 public interface AuthorMapper {
     AuthorMapper INSTANCE = Mappers.getMapper(AuthorMapper.class);
 
@@ -22,7 +22,6 @@ public interface AuthorMapper {
 
     PageableResponse<AuthorResponse> pageableDtoToPageableResponse(PageableDto<AuthorDto> pageableResponse);
 
-    @Mapping(target = "books", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateAuthorFromAuthorUpdateRequest(AuthorUpdateRequest authorUpdateRequest, @MappingTarget Author author);
 }
