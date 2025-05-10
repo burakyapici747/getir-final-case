@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Sinks;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class BorrowingServiceImpl implements BorrowingService {
@@ -89,7 +90,6 @@ public class BorrowingServiceImpl implements BorrowingService {
         LocalDateTime dueDate = borrowDate.plusDays(15);
 
         Borrowing borrowing = Borrowing.builder()
-            .bookCopy(bookCopy)
             .user(patron)
             .borrowDate(borrowDate)
             .dueDate(dueDate)
@@ -123,7 +123,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         BookCopy bookCopy = bookCopyService.getBookCopyByBarcodeOrElseThrow(barcode);
         Book book = bookCopy.getBook();
 
-        Borrowing borrowing = borrowingRepository.findByStatusAndBookCopy_BarcodeAndUser_Id(
+        Borrowing borrowing = borrowingRepository.findByStatusAndBookCopyBarcodeAndUserId(
             BorrowStatus.BORROWED,
             barcode,
             patron.getId()
@@ -143,7 +143,6 @@ public class BorrowingServiceImpl implements BorrowingService {
         LocalDateTime returnDateTime = LocalDateTime.now();
 
         Borrowing returnBorrowing = Borrowing.builder()
-            .bookCopy(bookCopy)
             .returnDate(returnDateTime)
             .processedByStaff(librarian)
             .user(patron)
@@ -157,11 +156,16 @@ public class BorrowingServiceImpl implements BorrowingService {
         return BorrowMapper.INSTANCE.borrowToBorrowDto(savedReturnBorrowing);
     }
 
+    @Override
+    public void deleteAllByBookId(UUID bookId) {
+        borrowingRepository.deleteAllByBookCopyBookId(bookId);
+    }
+
     private void publishBookAvailabilityUpdateEvent(BookCopy bookCopy) {
         int newAvailableCount = bookCopyService.countByIdAndStatus(bookCopy.getBook().getId(), BookCopyStatus.AVAILABLE);
 
         BookAvailabilityUpdateEvent event =
-                new BookAvailabilityUpdateEvent(bookCopy.getBook().getId(), newAvailableCount);
+            new BookAvailabilityUpdateEvent(bookCopy.getBook().getId(), newAvailableCount);
 
         bookAvailabilitySink.emitNext(event, Sinks.EmitFailureHandler.FAIL_FAST);
     }

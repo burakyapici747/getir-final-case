@@ -5,7 +5,7 @@ import com.burakyapici.library.domain.model.Borrowing;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "default")
 public interface BorrowMapper {
     BorrowMapper INSTANCE = Mappers.getMapper(BorrowMapper.class);
 
