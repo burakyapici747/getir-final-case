@@ -9,11 +9,13 @@ import com.burakyapici.library.domain.dto.BookDto;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.model.Book;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface BookService {
     PageableDto<BookDto> getAllBooks(int currentPage, int pageSize);
+    List<BookDto> getAllBooksByAuthorId(UUID authorId);
     BookDetailDto getBookDetailById(UUID id);
     Book getBookByIdOrElseThrow(UUID id);
     PageableDto<BookCopyDto> getBookCopiesById(UUID id, int currentPage, int pageSize);
@@ -22,5 +24,6 @@ public interface BookService {
     PageableDto<BookDto> searchBooks(BookSearchCriteria bookSearchCriteria, int currentPage, int pageSize);
     Optional<Book> findBookByIdAndAuthorId(UUID bookId, UUID authorId);
     int calculateAvailableCopiesCount(UUID bookId);
-    void deleteBook(UUID id);
+    Book saveBook(Book book);
+    void deleteBookById(UUID id);
 }

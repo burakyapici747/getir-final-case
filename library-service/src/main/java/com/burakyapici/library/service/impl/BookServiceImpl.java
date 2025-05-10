@@ -12,7 +12,6 @@ import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.model.Author;
 import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.Genre;
-import com.burakyapici.library.domain.repository.BookCopyRepository;
 import com.burakyapici.library.domain.repository.BookRepository;
 import com.burakyapici.library.domain.specification.BookSpecifications;
 import com.burakyapici.library.exception.BookNotFoundException;
@@ -23,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +37,7 @@ public class BookServiceImpl implements BookService {
     private final GenreService genreService;
     private final WaitListService waitListService;
     private final BookCopyService bookCopyService;
-    private final BookCopyRepository bookCopyRepository;
+    private final BorrowingService borrowingService;
 
     public BookServiceImpl(
         BookRepository bookRepository,
@@ -46,13 +46,13 @@ public class BookServiceImpl implements BookService {
         GenreService genreService,
         WaitListService waitListService,
         BookCopyService bookCopyService,
-        BookCopyRepository bookCopyRepository) {
+        BorrowingService borrowingService) {
         this.waitListService = waitListService;
         this.bookRepository = bookRepository;
         this.authorService = authorService;
         this.genreService = genreService;
         this.bookCopyService = bookCopyService;
-        this.bookCopyRepository = bookCopyRepository;
+        this.borrowingService = borrowingService;
     }
 
     @Override
@@ -64,10 +64,17 @@ public class BookServiceImpl implements BookService {
         return new PageableDto<>(
             bookDtoList,
             allBooksPage.getTotalPages(),
-                BookServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
+            pageSize,
             currentPage,
             allBooksPage.hasNext(),
             allBooksPage.hasPrevious()
+        );
+    }
+
+    @Override
+    public List<BookDto> getAllBooksByAuthorId(UUID authorId) {
+        return BookMapper.INSTANCE.bookListToBookDtoList(
+            bookRepository.findAllByAuthors_Id(authorId)
         );
     }
 
@@ -121,7 +128,7 @@ public class BookServiceImpl implements BookService {
             waitListService
         );
 
-        return BookMapper.INSTANCE.bookToBookDto(book);
+        return BookMapper.INSTANCE.bookToBookDto(bookRepository.save(book));
     }
 
     @Override
@@ -155,9 +162,19 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public void deleteBook(UUID id) {
-        Book book = getBookByIdOrElseThrow(id);
-        bookRepository.delete(book);
+    public Book saveBook(Book book) {
+        return bookRepository.save(book);
+    }
+
+    @Override
+    @Transactional
+    public void deleteBookById(UUID id) {
+        validateBookExistsById(id);
+        waitListService.deleteByBookId(id);
+        borrowingService.deleteAllByBookId(id);
+        bookCopyService.deleteAllByBookId(id);
+        bookRepository.deleteById(id);
+
     }
 
     private Book findById(UUID id) {
@@ -166,12 +183,14 @@ public class BookServiceImpl implements BookService {
     }
 
     private void validateBookForCreation(BookCreateRequest bookCreateRequest) {
-        if (bookRepository.existsByIsbn(bookCreateRequest.isbn())) {
-            throw new RuntimeException("Book with ISBN " + bookCreateRequest.isbn() + " already exists.");
+        if(bookRepository.existsByIsbnOrTitle(bookCreateRequest.isbn(), bookCreateRequest.title())) {
+            throw new IllegalArgumentException("Book with the same ISBN or title already exists.");
         }
+    }
 
-        if(bookRepository.existsByTitle(bookCreateRequest.title())) {
-            throw new RuntimeException("Book with title " + bookCreateRequest.title() + " already exists.");
+    private void validateBookExistsById(UUID id) {
+        if(!bookRepository.existsById(id)) {
+            throw new BookNotFoundException("Book not found with id: " + id);
         }
     }
 }

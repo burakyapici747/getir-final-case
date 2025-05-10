@@ -9,7 +9,7 @@ public record BookSearchCriteria(
     String title,
     String isbn,
     BookStatus bookStatus,
-    int page,
+    Integer page,
     LocalDate publicationDate,
     UUID genreId,
     UUID authorId

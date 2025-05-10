@@ -6,6 +6,6 @@ import java.util.UUID;
 
 public record BookCopyResponse(
     UUID id,
-    UUID barcode,
+    String barcode,
     BookCopyStatus status
 ) {}

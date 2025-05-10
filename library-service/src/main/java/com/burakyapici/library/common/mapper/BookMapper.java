@@ -9,6 +9,7 @@ import com.burakyapici.library.domain.dto.BookDto;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.model.Author;
 import com.burakyapici.library.domain.model.Book;
+import com.burakyapici.library.domain.model.BookCopy;
 import com.burakyapici.library.domain.model.Genre;
 import com.burakyapici.library.service.AuthorService;
 import com.burakyapici.library.service.GenreService;
@@ -17,14 +18,23 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.*;
+import java.util.stream.Stream;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "default",
+    collectionMappingStrategy = CollectionMappingStrategy.TARGET_IMMUTABLE,
+    uses = { WaitListMapper.class }
+)
 public interface BookMapper {
     BookMapper INSTANCE = Mappers.getMapper(BookMapper.class);
 
     BookDto bookToBookDto(Book book);
+
     List<BookDto> bookListToBookDtoList(List<Book> books);
 
+    List<BookResponse> bookDtoListToBookResponseList(List<BookDto> bookDtoList);
+
+    @Mapping(target = "availableCopies", expression = "java(getBookCopiesCount(book.getBookCopies()))")
     BookDetailDto bookToBookDetailDto(Book book);
 
     BookResponse bookDtoToBookResponse(BookDto bookDto);
@@ -38,9 +48,22 @@ public interface BookMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "waitLists", ignore = true)
-    @Mapping(target = "authors", source = "authorIds", qualifiedByName = "mapAuthors")
-    @Mapping(target = "genres", source = "genreIds", qualifiedByName = "mapGenres")
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(
+        target                     = "authors",
+        source                     = "authorIds",
+        qualifiedByName            = "mapAuthors",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+    )
+    @Mapping(
+        target                     = "genres",
+        source                     = "genreIds",
+        qualifiedByName            = "mapGenres",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+    )
+    @BeanMapping(
+        nullValueCheckStrategy           = NullValueCheckStrategy.ALWAYS,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+    )
     void updateBookFromBookUpdateRequest(
         BookUpdateRequest bookUpdateRequest,
         @MappingTarget Book book,
@@ -48,6 +71,7 @@ public interface BookMapper {
         @Context GenreService genreService,
         @Context WaitListService waitListService
     );
+
 
     @Named("mapAuthors")
     default Set<Author> mapAuthors(Set<UUID> authorIds, @Context AuthorService authorService) {
@@ -63,5 +87,13 @@ public interface BookMapper {
             .filter(ids -> !ids.isEmpty())
             .map(genreService::getGenresByIdsOrElseThrow)
             .orElse(null);
+    }
+
+    @Named("getBookCopiesCount")
+    default int getBookCopiesCount(Set<BookCopy> bookCopies) {
+        return Stream.ofNullable(bookCopies)
+            .map(Set::size)
+            .findFirst()
+            .orElse(0);
     }
 }

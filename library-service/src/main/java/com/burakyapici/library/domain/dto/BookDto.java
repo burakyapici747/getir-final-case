@@ -1,15 +1,17 @@
 package com.burakyapici.library.domain.dto;
 
-import com.burakyapici.library.domain.model.Author;
-import com.burakyapici.library.domain.model.Genre;
+import com.burakyapici.library.domain.enums.BookStatus;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
 public record BookDto(
+    String id,
     String title,
     String isbn,
+    BookStatus bookStatus,
+    LocalDate publicationDate,
     int page,
-    List<Genre> genres,
-    Set<Author> author
+    List<GenreDto> genres,
+    List<AuthorDto> authors
 ){}

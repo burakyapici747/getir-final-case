@@ -22,4 +22,5 @@ public interface BookCopyService {
     int countByIdAndStatus(UUID id, BookCopyStatus status);
     BookCopy saveBookCopy(BookCopy bookCopy);
     PageableDto<BookCopyDto> searchBookCopies(BookCopySearchCriteria bookCopySearchCriteria, int currentPage, int pageSize);
+    void deleteAllByBookId(UUID bookId);
 }

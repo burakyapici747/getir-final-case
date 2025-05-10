@@ -10,9 +10,10 @@ import com.burakyapici.library.api.dto.response.BookResponse;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.common.mapper.BookCopyMapper;
 import com.burakyapici.library.common.mapper.BookMapper;
-import com.burakyapici.library.domain.model.Book;
-import com.burakyapici.library.domain.repository.BookRepository;
 import com.burakyapici.library.service.BookService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,27 +29,23 @@ public class BookController {
     private final BookService bookService;
     private final Flux<BookAvailabilityUpdateEvent> bookAvailabilityFlux;
     private final Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink;
-    private final BookRepository bookRepository;
 
     public BookController(
-            BookService bookService,
-            Flux<BookAvailabilityUpdateEvent> bookAvailabilityFlux,
-            Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink, BookRepository bookRepository
+        BookService bookService,
+        Flux<BookAvailabilityUpdateEvent> bookAvailabilityFlux,
+        Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink
     ) {
         this.bookService = bookService;
         this.bookAvailabilityFlux = bookAvailabilityFlux;
         this.bookAvailabilitySink = bookAvailabilitySink;
-        this.bookRepository = bookRepository;
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<List<Book>> getAllBooks() {
-        return ResponseEntity.ok(bookRepository.findAll());
     }
 
     @GetMapping
     public ResponseEntity<PageableResponse<BookResponse>> getAllBooks(
+        @Min(value = 0)
         @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
+        @Min(value = 1)
+        @Max(value = 50)
         @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
     ) {
         return ResponseEntity.ok(
@@ -67,7 +63,7 @@ public class BookController {
     @GetMapping("/search")
     public ResponseEntity<PageableResponse<BookResponse>> searchBooks(
         @ModelAttribute BookSearchCriteria bookSearchCriteria,
-        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
+        @RequestParam(name = "currentPage", defaultValue = "0", required = false) int currentPage,
         @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
     ) {
         return ResponseEntity.ok(
@@ -79,7 +75,7 @@ public class BookController {
 
     @GetMapping("/{id}/copies")
     public ResponseEntity<PageableResponse<BookCopyResponse>> getBookCopies(
-        @PathVariable UUID id,
+        @PathVariable("id") UUID id,
         @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
         @RequestParam(name = "size", defaultValue = "10",required = false) int pageSize
     ) {
@@ -108,14 +104,19 @@ public class BookController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<BookResponse> updateBook(@PathVariable UUID id, @RequestBody BookUpdateRequest bookUpdateRequest) {
-        return ResponseEntity.ok(BookMapper.INSTANCE.bookDtoToBookResponse(bookService.updateBook(id, bookUpdateRequest)));
+    public ResponseEntity<BookResponse> updateBook(
+        @PathVariable("id") UUID id,
+        @RequestBody BookUpdateRequest bookUpdateRequest
+    ) {
+        return ResponseEntity.ok(
+            BookMapper.INSTANCE.bookDtoToBookResponse(bookService.updateBook(id, bookUpdateRequest))
+        );
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<?> deleteBook(@PathVariable UUID id) {
-        bookService.deleteBook(id);
-        return ResponseEntity.ok("Book deleted successfully");
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteBook(@PathVariable("id") UUID id) {
+        bookService.deleteBookById(id);
     }
 }

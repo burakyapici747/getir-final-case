@@ -11,7 +11,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "default")
 public interface BookCopyMapper {
     BookCopyMapper INSTANCE = Mappers.getMapper(BookCopyMapper.class);
 
@@ -26,7 +26,6 @@ public interface BookCopyMapper {
     @Mapping(target = "book", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "borrowingHistory", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateBookCopyFromBookCopyUpdateRequest(BookCopyUpdateRequest bookCopyUpdateRequest, @MappingTarget BookCopy bookCopy);
 }

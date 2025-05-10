@@ -33,25 +33,25 @@ public class BookSpecifications {
                 predicates.add(cb.equal(root.get("bookStatus"), criteria.bookStatus()));
             }
 
+            if (criteria.page() != null) {
+                predicates.add(cb.equal(root.get("page"), criteria.page()));
+            }
+
             if (criteria.publicationDate() != null) {
                 predicates.add(cb.equal(root.get("publicationDate"), criteria.publicationDate()));
             }
 
             if (criteria.genreId() != null) {
-                Join<Book, Genre> genreJoin = root.join("genre", JoinType.INNER);
+                Join<Book, Genre> genreJoin = root.joinSet("genres", JoinType.INNER);
                 predicates.add(cb.equal(genreJoin.get("id"), criteria.genreId()));
             }
 
             if (criteria.authorId() != null) {
-                Join<Book, Author> authorJoin = root.join("author", JoinType.INNER);
+                Join<Book, Author> authorJoin = root.joinSet("authors", JoinType.INNER);
                 predicates.add(cb.equal(authorJoin.get("id"), criteria.authorId()));
             }
 
-            if (predicates.isEmpty()) {
-                return null;
-            } else {
-                return cb.and(predicates.toArray(new Predicate[0]));
-            }
+            return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 }

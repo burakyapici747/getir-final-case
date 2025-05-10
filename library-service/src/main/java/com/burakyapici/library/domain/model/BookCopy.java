@@ -1,16 +1,14 @@
 package com.burakyapici.library.domain.model;
 
 import com.burakyapici.library.domain.enums.BookCopyStatus;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -30,17 +28,11 @@ public class BookCopy extends BaseModel {
     @Column(name = "availability_status", length = 20, nullable = false)
     private BookCopyStatus status;
 
-    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY, optional = false, targetEntity = Book.class)
     @JoinColumn(name = "book_id", referencedColumnName = "id")
     private Book book;
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "bookCopy", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = Borrowing.class)
-    private List<Borrowing> borrowingHistory = new ArrayList<>();
-
-    @JsonManagedReference
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "reserved_for_wait_list_id", referencedColumnName = "id")
-    private WaitList reservedForWaitList;
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_copy_id", referencedColumnName = "id")
+    private Set<Borrowing> borrowings = new HashSet<>();
 }

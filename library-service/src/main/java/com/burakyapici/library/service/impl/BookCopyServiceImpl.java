@@ -90,6 +90,11 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    public void deleteAllByBookId(UUID bookId) {
+        bookCopyRepository.deleteByBookId(bookId);
+    }
+
+    @Override
     public BookCopy getBookCopyByIdOrElseThrow(UUID id) {
         return findByIdOrElseThrow(id);
     }

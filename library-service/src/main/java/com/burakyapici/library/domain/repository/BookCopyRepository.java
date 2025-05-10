@@ -8,6 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -18,4 +21,15 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, UUID>, JpaSp
     boolean existsByBarcode(String barcode);
     int countByBook_IdAndStatus(UUID bookId, @NotNull BookCopyStatus status);
     Page<BookCopy> findAll(Specification<BookCopy> specification, Pageable pageable);
+
+    @Modifying
+    @Query(
+        value =
+           """
+               DELETE FROM book_copy
+               WHERE book_id = :bookId
+           """,
+        nativeQuery = true
+    )
+    void deleteByBookId(@Param(value = "bookId") UUID bookId);
 }

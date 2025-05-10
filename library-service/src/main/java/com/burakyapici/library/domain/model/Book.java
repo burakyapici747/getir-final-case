@@ -1,7 +1,6 @@
 package com.burakyapici.library.domain.model;
 
 import com.burakyapici.library.domain.enums.BookStatus;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
@@ -21,6 +20,28 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "book")
+@NamedEntityGraph(
+    name = "Book.detail",
+    attributeNodes = {
+        @NamedAttributeNode("authors"),
+        @NamedAttributeNode("genres"),
+        @NamedAttributeNode(value = "waitLists", subgraph = "waitLists-with-user"),
+        @NamedAttributeNode("bookCopies")
+    },
+    subgraphs = {
+        @NamedSubgraph(
+            name = "waitLists-with-user",
+            attributeNodes = @NamedAttributeNode("user")
+        )
+    }
+)
+@NamedEntityGraph(
+    name = "Book",
+    attributeNodes = {
+        @NamedAttributeNode("authors"),
+        @NamedAttributeNode("genres"),
+    }
+)
 public class Book extends BaseModel {
     @NotBlank
     @Size(max = 255)
@@ -45,30 +66,32 @@ public class Book extends BaseModel {
     private LocalDate publicationDate;
 
     @Builder.Default
-    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    private final Set<Author> authors = new HashSet<>();
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "book_author",
+        joinColumns = @JoinColumn(name = "book_id"),
+        inverseJoinColumns = @JoinColumn(name = "author_id")
+    )
+    private Set<Author> authors = new HashSet<>();
 
     @Builder.Default
-    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "book_genre",
         joinColumns = @JoinColumn(name = "book_id"),
         inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
-    private final Set<Genre> genres = new HashSet<>();
+    private Set<Genre> genres = new HashSet<>();
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = WaitList.class)
-    private final Set<WaitList> waitLists = new HashSet<>();
+    @OneToMany(fetch = FetchType.LAZY, targetEntity = WaitList.class)
+    @JoinColumn(name = "book_id", referencedColumnName = "id")
+    private Set<WaitList> waitLists = new HashSet<>();
 
     @OneToMany(
         mappedBy = "book",
-        cascade = CascadeType.ALL,
         fetch = FetchType.LAZY,
-        orphanRemoval = true,
         targetEntity = BookCopy.class
     )
-    @JsonManagedReference
     @Builder.Default
-    private final Set<BookCopy> bookCopies = new HashSet<>();
+    private Set<BookCopy> bookCopies = new HashSet<>();
 }
