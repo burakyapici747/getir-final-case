@@ -21,4 +21,5 @@ public interface WaitListService {
     List<WaitListDto> getByBookIdAndStatus(UUID bookId, WaitListStatus waitListStatus);
     WaitList getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus waitListStatus);
     WaitList saveWaitList(WaitList waitList);
+    void deleteByBookId(UUID bookId);
 }

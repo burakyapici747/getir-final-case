@@ -1,4 +1,10 @@
 package com.burakyapici.library.domain.dto;
 
-public record WaitListDto() {
-}
+import com.burakyapici.library.domain.enums.WaitListStatus;
+
+public record WaitListDto(
+    UserDto user,
+    String startDate,
+    String endDate,
+    WaitListStatus status
+) {}

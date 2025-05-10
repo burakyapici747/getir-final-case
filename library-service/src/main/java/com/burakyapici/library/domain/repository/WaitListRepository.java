@@ -5,17 +5,94 @@ import com.burakyapici.library.domain.model.WaitList;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
-    boolean existsByBook_Id(UUID bookId);
-    Page<WaitList> findAllByBook_Id(UUID bookId, Pageable pageable);
+    @Query(value =
+        """
+            SELECT EXISTS (
+                SELECT 1
+                FROM wait_list wl
+                WHERE wl.book_id = :bookId
+                LIMIT 1
+            )
+        """,
+        nativeQuery = true
+    )
+    boolean existsByBook_Id(@Param(value = "book_id") UUID bookId);
+
+    @Query(value =
+        """
+            SELECT * FROM wait_list wl
+            WHERE wl.book_id = :bookId
+        """,
+        countQuery =
+        """
+            SELECT COUNT(*) FROM wait_list wl
+            WHERE wl.book_id = :bookId
+        """,
+        nativeQuery = true
+    )
+    Page<WaitList> findByBookId(@Param("bookId") UUID bookId, Pageable pageable);
+
+    @Query(value =
+        """
+            SELECT * FROM wait_list wl
+            WHERE wl.book_id = :bookId
+            AND wl.status IN (:waitListStatuses)
+        """,
+        nativeQuery = true
+    )
+    Optional<WaitList> findWaitListByBookIdAndWaitListStatusIn(UUID bookId, Set<WaitListStatus> waitListStatuses);
+
+    @Query(
+            value = """
+        SELECT * FROM wait_list
+        WHERE book_id = :bookId
+        """,
+            countQuery = """
+        SELECT COUNT(*) FROM wait_list
+        WHERE book_id = :bookId
+        """,
+            nativeQuery = true
+    )
+    Page<WaitList> findAllByBookId(@Param("bookId") UUID bookId, Pageable pageable);
+
     List<WaitList> findByUser_Id(UUID id);
-    List<WaitList> findByBook_IdAndStatus(UUID bookId, WaitListStatus status);
+
+    @Query(value =
+            """
+                SELECT * FROM wait_list wl
+                WHERE wl.book_id = :bookId
+                AND wl.status = :status
+            """,
+            nativeQuery = true
+    )
+    List<WaitList> findByBookIdAndStatus(@Param("bookId") UUID bookId, @Param("status") WaitListStatus status);
+
     List<WaitList> findByUser_IdAndStatusIn(UUID userId, Collection<WaitListStatus> statuses);
-    WaitList findByUser_IdAndBook_IdAndStatus(UUID userId, UUID bookId, WaitListStatus status);
-    Page<WaitList> findByBook_Id(UUID bookId, Pageable pageable);
+
+    @Query(value =
+        """
+            SELECT * FROM wait_list wl
+            WHERE wl.user_id = :userId
+            AND wl.book_id = :bookId
+            AND wl.status = :status
+        """,
+        nativeQuery = true
+    )
+    WaitList findByUserIdAndBookIdAndStatus(@Param("userId") UUID userId, @Param("bookId") UUID bookId, @Param("status") WaitListStatus status);
+
+    @Modifying
+    @Query(value =
+        """
+        DELETE FROM wait_list wl
+        WHERE wl.book_id = :bookId
+        """
+    , nativeQuery = true)
+    void deleteByBookId(@Param(value = "bookId") UUID bookId);
 }

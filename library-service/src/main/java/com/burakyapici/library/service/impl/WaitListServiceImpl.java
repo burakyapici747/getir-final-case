@@ -58,15 +58,12 @@ public class WaitListServiceImpl implements WaitListService {
             throw new BookStatusValidationException(book.getBookStatus().getDescription());
         }
 
-        patron.getWaitLists().stream()
-            .filter(waitList -> waitList.getBook().getId().equals(placeHoldRequest.bookId()))
-            .filter(waitList ->
-                waitList.getStatus().equals(WaitListStatus.WAITING) ||
-                waitList.getStatus().equals(WaitListStatus.READY_FOR_PICKUP))
-            .findAny()
-            .ifPresent(waitList -> {
-                throw new IllegalStateException("You already have a wait list for this book.");
-            });
+        waitListRepository.findWaitListByBookIdAndWaitListStatusIn(
+            placeHoldRequest.bookId(),
+            Set.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
+        ).ifPresent(waitList -> {
+            throw new IllegalStateException("There is already a wait list for this book.");
+        });
 
         //TODO: Wait List LIMIT kontrolu yapilacak.
         //TODO: Book availability (müsait kopya var mı) kontrolünü ekleyin (BookCopyService kullanarak).
@@ -74,11 +71,11 @@ public class WaitListServiceImpl implements WaitListService {
 
         WaitList waitList = WaitList.builder()
             .startDate(LocalDateTime.now())
-            .book(book)
             .status(WaitListStatus.WAITING)
             .build();
 
         waitListRepository.save(waitList);
+        bookService.saveBook(book);
 
         return WaitListMapper.INSTANCE.waitListToWaitListDto(waitList);
     }
@@ -148,7 +145,7 @@ public class WaitListServiceImpl implements WaitListService {
     @Override
     public PageableDto<WaitListDto> getWaitListsByBookId(UUID bookId, int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(currentPage, pageSize);
-        Page<WaitList> allWaitListsPage = waitListRepository.findByBook_Id(bookId, pageable);
+        Page<WaitList> allWaitListsPage = waitListRepository.findByBookId(bookId, pageable);
         List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.waitListToWaitListDto(allWaitListsPage.getContent());
 
         return new PageableDto<>(
@@ -184,18 +181,23 @@ public class WaitListServiceImpl implements WaitListService {
 
     @Override
     public List<WaitListDto> getByBookIdAndStatus(UUID bookId, WaitListStatus waitListStatus) {
-        List<WaitList> waitLists = waitListRepository.findByBook_IdAndStatus(bookId, waitListStatus);
+        List<WaitList> waitLists = waitListRepository.findByBookIdAndStatus(bookId, waitListStatus);
         return WaitListMapper.INSTANCE.waitListToWaitListDto(waitLists);
     }
 
     @Override
     public WaitList getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus waitListStatus) {
-        return waitListRepository.findByUser_IdAndBook_IdAndStatus(userId, bookId, waitListStatus);
+        return waitListRepository.findByUserIdAndBookIdAndStatus(userId, bookId, waitListStatus);
     }
 
     @Override
     public WaitList saveWaitList(WaitList waitList) {
         return waitListRepository.save(waitList);
+    }
+
+    @Override
+    public void deleteByBookId(UUID bookId) {
+        waitListRepository.deleteByBookId(bookId);
     }
 
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {

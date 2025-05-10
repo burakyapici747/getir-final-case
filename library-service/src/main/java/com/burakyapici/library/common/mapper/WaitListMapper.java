@@ -10,13 +10,14 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "default")
 public interface WaitListMapper {
     WaitListMapper INSTANCE = Mappers.getMapper(WaitListMapper.class);
 
     WaitListDto waitListToWaitListDto(WaitList waitList);
 
     List<WaitListDto> waitListToWaitListDto(List<WaitList> waitLists);
+
     WaitListResponse waitListDtoToWaitListResponse(WaitListDto waitListDto);
 
     PageableResponse<WaitListResponse> pageableDtoToPageableResponse(PageableDto<WaitListDto> pageableDto);

@@ -8,9 +8,7 @@ import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -63,24 +61,6 @@ public class User extends BaseModel {
     @Enumerated(EnumType.STRING)
     @Column(name = "patron_status")
     private PatronStatus patronStatus;
-
-    @OneToMany(
-        mappedBy = "user",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true,
-        fetch = FetchType.LAZY,
-        targetEntity = Borrowing.class
-    )
-    private final Set<Borrowing> borrowingList = new HashSet<>();
-
-    @OneToMany(
-        mappedBy = "user",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true,
-        fetch = FetchType.LAZY,
-        targetEntity = WaitList.class
-    )
-    private final Set<WaitList> waitLists = new HashSet<>();
 
     @Transient
     public Collection<? extends GrantedAuthority> getAuthorities() {
