@@ -1,5 +1,6 @@
 package com.burakyapici.library.api.controller;
 
+import com.burakyapici.library.api.ApiResponse;
 import com.burakyapici.library.api.dto.request.PlaceHoldRequest;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.api.dto.response.WaitListResponse;
@@ -24,58 +25,59 @@ public class WaitListController {
     }
 
     @GetMapping("/my-holds")
-    public ResponseEntity<List<WaitListResponse>> getMyHolds(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(
-            WaitListMapper.INSTANCE.waitListDtoToWaitListResponse(
-                waitListService.getWaitListsByPatronId(userDetails.getId())
-            )
+    public ResponseEntity<ApiResponse<List<WaitListResponse>>> getMyHolds(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<WaitListResponse> waitLists = WaitListMapper.INSTANCE.waitListDtoToWaitListResponse(
+            waitListService.getWaitListsByPatronId(userDetails.getId())
         );
+
+        return ApiResponse.okResponse(waitLists, "Your holds retrieved successfully");
     }
 
     @GetMapping("/book/{bookId}")
-    public ResponseEntity<PageableResponse<WaitListResponse>> getWaitListForBook(
+    public ResponseEntity<ApiResponse<PageableResponse<WaitListResponse>>> getWaitListForBook(
         @PathVariable UUID bookId,
-        @RequestParam(name = "page", required = false) int currentPage,
-        @RequestParam(name = "size", required = false) int pageSize
+        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
+        @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
     ) {
-        return ResponseEntity.ok(
-            WaitListMapper.INSTANCE.pageableDtoToPageableResponse(
-                waitListService.getWaitListsByBookId(bookId, currentPage, pageSize)
-            )
+        PageableResponse<WaitListResponse> waitLists = WaitListMapper.INSTANCE.pageableDtoToPageableResponse(
+            waitListService.getWaitListsByBookId(bookId, currentPage, pageSize)
         );
+
+        return ApiResponse.okResponse(waitLists, "Wait list for book retrieved successfully");
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<PageableResponse<WaitListResponse>> getAllWaitLists(
-        @RequestParam(name = "page", required = false) int currentPage,
-        @RequestParam(name = "size", required = false) int pageSize
+    public ResponseEntity<ApiResponse<PageableResponse<WaitListResponse>>> getAllWaitLists(
+        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
+        @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
     ) {
-        return ResponseEntity.ok(
-            WaitListMapper.INSTANCE.pageableDtoToPageableResponse(
-                waitListService.getAllWaitLists(currentPage, pageSize)
-            )
+        PageableResponse<WaitListResponse> waitLists = WaitListMapper.INSTANCE.pageableDtoToPageableResponse(
+            waitListService.getAllWaitLists(currentPage, pageSize)
         );
+
+        return ApiResponse.okResponse(waitLists, "All wait lists retrieved successfully");
     }
 
     @PostMapping
-    public ResponseEntity<WaitListResponse> placeHold(
+    public ResponseEntity<ApiResponse<WaitListResponse>> placeHold(
         @RequestBody PlaceHoldRequest placeHoldRequest,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        return ResponseEntity.ok(
-            WaitListMapper.INSTANCE.waitListDtoToWaitListResponse(
-                waitListService.placeHold(placeHoldRequest, userDetails.getId())
-            )
+        WaitListResponse waitList = WaitListMapper.INSTANCE.waitListDtoToWaitListResponse(
+            waitListService.placeHold(placeHoldRequest, userDetails.getId())
         );
+
+        return ApiResponse.createdResponse(waitList, "Hold placed successfully", waitList.id());
     }
 
     @DeleteMapping("/{waitListId}")
-    public ResponseEntity<Void> cancelHold(
+    public ResponseEntity<ApiResponse<Void>> cancelHold(
         @PathVariable UUID waitListId,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         waitListService.cancelHold(waitListId, userDetails.getId());
-        return ResponseEntity.noContent().build();
+
+        return ApiResponse.noContentResponse("Hold cancelled successfully");
     }
 }

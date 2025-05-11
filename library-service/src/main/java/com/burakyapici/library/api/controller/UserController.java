@@ -1,5 +1,6 @@
 package com.burakyapici.library.api.controller;
 
+import com.burakyapici.library.api.ApiResponse;
 import com.burakyapici.library.api.dto.request.UserUpdateRequest;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.api.dto.response.UserDetailResponse;
@@ -25,43 +26,52 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<PageableResponse<UserDto>> getAllUsers(
-        @RequestParam(name = "page", required = false) int currentPage,
-        @RequestParam(name = "size",required = false) int pageSize
+    public ResponseEntity<ApiResponse<PageableResponse<UserDto>>> getAllUsers(
+        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
+        @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
     ){
-        return ResponseEntity.ok(
-            UserMapper.INSTANCE.pageableDtoToPageableResponse(userService.getAllUsers(currentPage, pageSize))
+        PageableResponse<UserDto> users = UserMapper.INSTANCE.pageableDtoToPageableResponse(
+            userService.getAllUsers(currentPage, pageSize)
         );
+        return ApiResponse.okResponse(users, "Users retrieved successfully");
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<UserDetailResponse> getUserById(@PathVariable UUID id){
-        return ResponseEntity.ok(
-            UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(userService.getUserDetailById(id))
+    public ResponseEntity<ApiResponse<UserDetailResponse>> getUserById(@PathVariable UUID id){
+        UserDetailResponse user = UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(
+            userService.getUserDetailById(id)
         );
+        return ApiResponse.okResponse(user, "User details retrieved successfully");
     }
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('ROLE_LIBRARIAN', 'ROLE_PATRON')")
-    public ResponseEntity<UserDetailResponse> getCurrentUser(@AuthenticationPrincipal UserDetailsImpl userDetails){
-        return ResponseEntity.ok(
-            UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(userService.getUserDetailById(userDetails.getId()))
+    public ResponseEntity<ApiResponse<UserDetailResponse>> getCurrentUser(
+        @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        UserDetailResponse user = UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(
+            userService.getUserDetailById(userDetails.getId())
         );
+        return ApiResponse.okResponse(user, "Current user details retrieved successfully");
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<?> updateUser(@PathVariable UUID id, @RequestBody UserUpdateRequest userUpdateRequest){
-        return ResponseEntity.ok(
-            UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(userService.updateUser(id, userUpdateRequest))
+    public ResponseEntity<ApiResponse<UserDetailResponse>> updateUser(
+        @PathVariable UUID id,
+        @RequestBody UserUpdateRequest userUpdateRequest
+    ){
+        UserDetailResponse updatedUser = UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(
+            userService.updateUser(id, userUpdateRequest)
         );
+        return ApiResponse.okResponse(updatedUser, "User updated successfully");
     }
 
     @DeleteMapping
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<?> deleteUser(@RequestParam UUID id){
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@RequestParam UUID id){
         userService.deleteUserById(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.noContentResponse("User deleted successfully");
     }
 }

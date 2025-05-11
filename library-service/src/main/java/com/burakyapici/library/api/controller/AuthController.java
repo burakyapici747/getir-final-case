@@ -1,5 +1,6 @@
 package com.burakyapici.library.api.controller;
 
+import com.burakyapici.library.api.ApiResponse;
 import com.burakyapici.library.api.dto.request.LoginRequest;
 import com.burakyapici.library.api.dto.request.RegisterRequest;
 import com.burakyapici.library.api.dto.response.LoginResponse;
@@ -22,22 +23,25 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
         @Valid
         @RequestBody
         LoginRequest loginRequest
     ){
-        return ResponseEntity.ok(authService.login(loginRequest));
+        LoginResponse loginResponse = authService.login(loginRequest);
+        return ApiResponse.okResponse(loginResponse, "Login successful");
     }
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(
+    public ResponseEntity<ApiResponse<RegisterResponse>> register(
         @Valid
         @RequestBody
         RegisterRequest registerRequest
     ){
-        return ResponseEntity.ok(authService.register(registerRequest));
+        RegisterResponse registerResponse = authService.register(registerRequest);
+        return ApiResponse.createdResponse(registerResponse, "Registration successful", registerResponse.id());
     }
+}
 
     //TODO: forgot-password
     //TODO: reset-password
@@ -47,4 +51,3 @@ public class AuthController {
     //TODO: /unlock-account/{userId}
     //TODO: /refresh-token
     //TODO: /logout
-}

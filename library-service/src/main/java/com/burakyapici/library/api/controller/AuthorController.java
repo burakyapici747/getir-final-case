@@ -1,5 +1,6 @@
 package com.burakyapici.library.api.controller;
 
+import com.burakyapici.library.api.ApiResponse;
 import com.burakyapici.library.api.dto.request.AuthorCreateRequest;
 import com.burakyapici.library.api.dto.request.AuthorSearchCriteria;
 import com.burakyapici.library.api.dto.request.AuthorUpdateRequest;
@@ -8,9 +9,7 @@ import com.burakyapici.library.api.dto.response.BookResponse;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.common.mapper.AuthorMapper;
 import com.burakyapici.library.common.mapper.BookMapper;
-import com.burakyapici.library.domain.dto.AuthorDto;
 import com.burakyapici.library.service.AuthorService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,73 +27,83 @@ public class AuthorController {
     }
 
     @GetMapping
-    public ResponseEntity<PageableResponse<AuthorResponse>> getAllAuthors(
+    public ResponseEntity<ApiResponse<PageableResponse<AuthorResponse>>> getAllAuthors(
         @RequestParam(value = "page", defaultValue = "0") int currentPage,
         @RequestParam(value = "size", defaultValue = "10") int pageSize
     ) {
-        return ResponseEntity.ok(
-            AuthorMapper.INSTANCE.pageableDtoToPageableResponse(authorService.getAllAuthors(currentPage, pageSize))
+        PageableResponse<AuthorResponse> authors = AuthorMapper.INSTANCE.pageableDtoToPageableResponse(
+            authorService.getAllAuthors(currentPage, pageSize)
         );
+        return ApiResponse.okResponse(authors, "Authors retrieved successfully");
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AuthorResponse> getAuthorById(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(AuthorMapper.INSTANCE.authorDtoToAuthorResponse(authorService.getAuthorById(id)));
+    public ResponseEntity<ApiResponse<AuthorResponse>> getAuthorById(@PathVariable("id") UUID id) {
+        AuthorResponse author = AuthorMapper.INSTANCE.authorDtoToAuthorResponse(
+            authorService.getAuthorById(id)
+        );
+        return ApiResponse.okResponse(author, "Author retrieved successfully");
     }
 
     @GetMapping("/search")
-    public ResponseEntity<PageableResponse<AuthorResponse>> searchAuthors(
+    public ResponseEntity<ApiResponse<PageableResponse<AuthorResponse>>> searchAuthors(
         @ModelAttribute AuthorSearchCriteria authorSearchCriteria,
         @RequestParam(value = "page", defaultValue = "0") int currentPage,
         @RequestParam(value = "size", defaultValue = "10") int pageSize
     ) {
-        return ResponseEntity.ok(
-            AuthorMapper.INSTANCE.pageableDtoToPageableResponse(
-                authorService.searchAuthors(authorSearchCriteria, currentPage, pageSize)
-            )
+        PageableResponse<AuthorResponse> authors = AuthorMapper.INSTANCE.pageableDtoToPageableResponse(
+            authorService.searchAuthors(authorSearchCriteria, currentPage, pageSize)
         );
+        return ApiResponse.okResponse(authors, "Authors retrieved successfully");
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_LIBRARIAN')")
-    public ResponseEntity<AuthorResponse> createAuthor(@RequestBody AuthorCreateRequest authorCreateRequest) {
-        return ResponseEntity.ok(
-            AuthorMapper.INSTANCE.authorDtoToAuthorResponse(authorService.createAuthor(authorCreateRequest))
+    public ResponseEntity<ApiResponse<AuthorResponse>> createAuthor(@RequestBody AuthorCreateRequest authorCreateRequest) {
+        AuthorResponse createdAuthor = AuthorMapper.INSTANCE.authorDtoToAuthorResponse(
+            authorService.createAuthor(authorCreateRequest)
         );
+        return ApiResponse.createdResponse(createdAuthor, "Author created successfully", createdAuthor.id());
     }
 
     @PostMapping("/{id}/books/{bookId}")
     @PreAuthorize("hasAuthority('ROLE_LIBRARIAN')")
-    public ResponseEntity<List<BookResponse>> addBookToAuthor(
+    public ResponseEntity<ApiResponse<List<BookResponse>>> addBookToAuthor(
         @PathVariable("id") UUID id,
         @PathVariable("bookId") UUID bookId
     ) {
-        return ResponseEntity.ok(
-            BookMapper.INSTANCE.bookDtoListToBookResponseList(authorService.addBookToAuthor(id, bookId))
+        List<BookResponse> books = BookMapper.INSTANCE.bookDtoListToBookResponseList(
+            authorService.addBookToAuthor(id, bookId)
         );
+        return ApiResponse.okResponse(books, "Book added to author successfully");
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_LIBRARIAN')")
-    public ResponseEntity<AuthorResponse> updateAuthor(
+    public ResponseEntity<ApiResponse<AuthorResponse>> updateAuthor(
         @PathVariable("id") UUID id,
         @RequestBody AuthorUpdateRequest authorUpdateRequest
     ) {
-        return ResponseEntity.ok(
-            AuthorMapper.INSTANCE.authorDtoToAuthorResponse(authorService.updateAuthor(id, authorUpdateRequest))
+        AuthorResponse updatedAuthor = AuthorMapper.INSTANCE.authorDtoToAuthorResponse(
+            authorService.updateAuthor(id, authorUpdateRequest)
         );
+        return ApiResponse.okResponse(updatedAuthor, "Author updated successfully");
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteById(@PathVariable("id") UUID id) {
+    @PreAuthorize("hasAuthority('ROLE_LIBRARIAN')")
+    public ResponseEntity<ApiResponse<Void>> deleteById(@PathVariable("id") UUID id) {
         authorService.deleteAuthorByAuthorId(id);
+        return ApiResponse.noContentResponse("Author deleted successfully");
     }
 
     @DeleteMapping("/{id}/books/{bookId}")
     @PreAuthorize("hasAuthority('ROLE_LIBRARIAN')")
-    public ResponseEntity<Void> removeBookFromAuthor(@PathVariable("id") UUID id, @PathVariable("bookId") UUID bookId) {
+    public ResponseEntity<ApiResponse<Void>> removeBookFromAuthor(
+        @PathVariable("id") UUID id,
+        @PathVariable("bookId") UUID bookId
+    ) {
         authorService.deleteBookFromAuthor(id, bookId);
-        return ResponseEntity.ok().build();
+        return ApiResponse.noContentResponse("Book removed from author successfully");
     }
 }
