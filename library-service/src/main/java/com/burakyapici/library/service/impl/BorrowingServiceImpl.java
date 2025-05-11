@@ -20,12 +20,15 @@ import com.burakyapici.library.service.validation.borrowing.BorrowValidationHand
 import com.burakyapici.library.service.validation.returning.ReturnHandlerRequest;
 import com.burakyapici.library.service.validation.returning.ReturnValidationHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Sinks;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class BorrowingServiceImpl implements BorrowingService {
@@ -66,44 +69,16 @@ public class BorrowingServiceImpl implements BorrowingService {
     ) {
         User patron = userService.getUserByIdOrElseThrow(borrowBookCopyRequest.patronId());
         User librarian = userService.getUserByIdOrElseThrow(userDetails.getId());
-
         BookCopy bookCopy = bookCopyService.getBookCopyByBarcodeOrElseThrow(barcode);
-
         Book book = bookCopy.getBook();
 
-        WaitList waitList = waitListService.getByUserIdAndBookIdAndStatus(
-            patron.getId(),
-            book.getId(),
-            WaitListStatus.READY_FOR_PICKUP
-        );
+        Optional<WaitList> optionalWaitList = findReadyForPickupWaitListEntry(patron, book);
 
-        BorrowHandlerRequest borrowHandlerRequest = new BorrowHandlerRequest(
-            bookCopy,
-            book,
-            patron,
-            waitList
-        );
+        validateBorrowRequest(bookCopy, book, patron, optionalWaitList);
 
-        borrowValidationHandler.handle(borrowHandlerRequest);
+        Borrowing borrowing = createBorrowingRecord(patron, librarian, bookCopy);
 
-        LocalDateTime borrowDate = LocalDateTime.now();
-        //TODO: Sistem tarafindan belirlenen bir sure olacak
-        LocalDateTime dueDate = borrowDate.plusDays(15);
-
-        Borrowing borrowing = Borrowing.builder()
-            .user(patron)
-            .borrowDate(borrowDate)
-            .dueDate(dueDate)
-            .processedByStaff(librarian)
-            .status(BorrowStatus.BORROWED)
-        .build();
-
-        bookCopy.setStatus(BookCopyStatus.CHECKED_OUT);
-        waitList.setStatus(WaitListStatus.COMPLETED);
-        waitList.setEndDate(LocalDateTime.now());
-
-        waitListService.saveWaitList(waitList);
-        bookCopyService.saveBookCopy(bookCopy);
+        updateRelatedEntities(bookCopy, optionalWaitList);
 
         Borrowing savedBorrowing = borrowingRepository.save(borrowing);
 
@@ -113,6 +88,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BorrowDto returnBookCopyByBarcode(
         String barcode,
         BorrowReturnRequest borrowReturnRequest,
@@ -125,11 +101,63 @@ public class BorrowingServiceImpl implements BorrowingService {
         Book book = bookCopy.getBook();
 
         Borrowing borrowing = borrowingRepository.findByStatusAndBookCopyBarcodeAndUserId(
-            BorrowStatus.BORROWED,
+            BorrowStatus.BORROWED.name(),
             barcode,
             patron.getId()
         );
 
+        validateReturnRequest(bookCopy, book, patron, borrowing);
+
+        bookCopy.setStatus(borrowReturnRequest.returnType().getBookCopyStatus());
+        bookCopyService.saveBookCopy(bookCopy);
+
+        LocalDateTime returnDateTime = LocalDateTime.now();
+
+        borrowing.setReturnDate(returnDateTime);
+        borrowing.setStatus(borrowReturnRequest.returnType().getBorrowStatus());
+        borrowing.setReturnedByStaff(librarian);
+
+        Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+
+        publishBookAvailabilityUpdateEvent(bookCopy);
+
+        return BorrowMapper.INSTANCE.borrowToBorrowDto(savedBorrowing);
+    }
+
+    @Override
+    @Async
+    @Transactional(rollbackFor = Exception.class)
+    public CompletableFuture<Void> deleteAllByBookId(UUID bookId) {
+        return CompletableFuture.runAsync(() -> {
+            borrowingRepository.deleteAllByBookCopyBookId(bookId);
+        });
+    }
+
+    private Optional<WaitList> findReadyForPickupWaitListEntry(User patron, Book book) {
+        return waitListService.getByUserIdAndBookIdAndStatus(
+            patron.getId(),
+            book.getId(),
+            WaitListStatus.READY_FOR_PICKUP
+        );
+    }
+
+    private void validateBorrowRequest(
+        BookCopy bookCopy,
+        Book book,
+        User patron,
+        Optional<WaitList> optionalWaitList
+    ) {
+        BorrowHandlerRequest borrowHandlerRequest = new BorrowHandlerRequest(
+            patron,
+            book,
+            bookCopy,
+            optionalWaitList
+        );
+
+        borrowValidationHandler.handle(borrowHandlerRequest);
+    }
+
+    private void validateReturnRequest(BookCopy bookCopy, Book book, User patron, Borrowing borrowing) {
         ReturnHandlerRequest returnHandlerRequest = new ReturnHandlerRequest(
             bookCopy,
             book,
@@ -138,28 +166,31 @@ public class BorrowingServiceImpl implements BorrowingService {
         );
 
         returnValidationHandler.handle(returnHandlerRequest);
-
-        bookCopy.setStatus(borrowReturnRequest.returnType().getBookCopyStatus());
-
-        LocalDateTime returnDateTime = LocalDateTime.now();
-
-        Borrowing returnBorrowing = Borrowing.builder()
-            .returnDate(returnDateTime)
-            .processedByStaff(librarian)
-            .user(patron)
-            .status(borrowReturnRequest.returnType().getBorrowStatus())
-            .build();
-
-        Borrowing savedReturnBorrowing = borrowingRepository.save(returnBorrowing);
-
-        publishBookAvailabilityUpdateEvent(bookCopy);
-
-        return BorrowMapper.INSTANCE.borrowToBorrowDto(savedReturnBorrowing);
     }
 
-    @Override
-    public void deleteAllByBookId(UUID bookId) {
-        borrowingRepository.deleteAllByBookCopyBookId(bookId);
+    private Borrowing createBorrowingRecord(User patron, User librarian, BookCopy bookCopy) {
+        LocalDateTime borrowDate = LocalDateTime.now();
+        LocalDateTime dueDate = borrowDate.plusDays(15);
+
+        return Borrowing.builder()
+            .user(patron)
+            .bookCopy(bookCopy)
+            .borrowDate(borrowDate)
+            .dueDate(dueDate)
+            .borrowedByStaff(librarian)
+            .status(BorrowStatus.BORROWED)
+            .build();
+    }
+
+    private void updateRelatedEntities(BookCopy bookCopy, Optional<WaitList> optionalWaitList) {
+        bookCopy.setStatus(BookCopyStatus.CHECKED_OUT);
+        bookCopyService.saveBookCopy(bookCopy);
+
+        optionalWaitList.ifPresent(waitList -> {
+            waitList.setStatus(WaitListStatus.COMPLETED);
+            waitList.setEndDate(LocalDateTime.now());
+            waitListService.saveWaitList(waitList);
+        });
     }
 
     private void publishBookAvailabilityUpdateEvent(BookCopy bookCopy) {

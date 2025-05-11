@@ -1,12 +1,7 @@
 package com.burakyapici.library.service.validation;
 
-import com.burakyapici.library.service.validation.borrowing.BorrowBookCopyStatusValidationHandler;
-import com.burakyapici.library.service.validation.borrowing.BorrowBookStatusValidationHandler;
-import com.burakyapici.library.service.validation.borrowing.BorrowPatronStatusValidationHandler;
-import com.burakyapici.library.service.validation.borrowing.BorrowValidationHandler;
-import com.burakyapici.library.service.validation.returning.ReturnBookCopyStatusValidationHandler;
-import com.burakyapici.library.service.validation.returning.ReturnStatusValidationHandler;
-import com.burakyapici.library.service.validation.returning.ReturnValidationHandler;
+import com.burakyapici.library.service.validation.borrowing.*;
+import com.burakyapici.library.service.validation.returning.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,23 +10,27 @@ public class BorrowValidationChainConfig {
     @Bean
     public BorrowValidationHandler borrowValidationChain(
         BorrowPatronStatusValidationHandler borrowPatronStatusValidationHandler,
+        BorrowPatronLimitValidationHandler borrowPatronLimitValidationHandler,
+        BorrowSameBookLimitValidationHandler borrowSameBookLimitValidationHandler,
         BorrowBookStatusValidationHandler bookStatusHandler,
         BorrowBookCopyStatusValidationHandler bookCopyStatusHandler
     ) {
-        borrowPatronStatusValidationHandler.setNextHandler(borrowPatronStatusValidationHandler);
+        borrowPatronStatusValidationHandler.setNextHandler(borrowPatronLimitValidationHandler);
+        borrowPatronLimitValidationHandler.setNextHandler(borrowSameBookLimitValidationHandler);
+        borrowSameBookLimitValidationHandler.setNextHandler(bookStatusHandler);
         bookStatusHandler.setNextHandler(bookCopyStatusHandler);
-        bookCopyStatusHandler.setNextHandler(borrowPatronStatusValidationHandler);
 
-        return bookStatusHandler;
+        return borrowPatronStatusValidationHandler;
     }
 
     @Bean
     public ReturnValidationHandler returnValidationChain(
         ReturnStatusValidationHandler returnStatusValidationHandler,
-        ReturnBookCopyStatusValidationHandler returnBookCopyStatusHandler
+        ReturnBookCopyStatusValidationHandler returnBookCopyStatusHandler,
+        ReturnBorrowMatchValidationHandler returnBorrowMatchValidationHandler
     ) {
-        returnStatusValidationHandler.setNextHandler(returnStatusValidationHandler);
-        returnBookCopyStatusHandler.setNextHandler(returnBookCopyStatusHandler);
+        returnStatusValidationHandler.setNextHandler(returnBookCopyStatusHandler);
+        returnBookCopyStatusHandler.setNextHandler(returnBorrowMatchValidationHandler);
 
         return returnStatusValidationHandler;
     }

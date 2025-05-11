@@ -6,6 +6,7 @@ import com.burakyapici.library.domain.dto.BorrowDto;
 import com.burakyapici.library.security.UserDetailsImpl;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface BorrowingService {
     BorrowDto borrowBookCopyByBarcode(
@@ -13,10 +14,12 @@ public interface BorrowingService {
         BorrowBookCopyRequest borrowBookCopyRequest,
         UserDetailsImpl userDetails
     );
+    
     BorrowDto returnBookCopyByBarcode(
         String barcode,
         BorrowReturnRequest borrowReturnRequest,
         UserDetailsImpl userDetails
     );
-    void deleteAllByBookId(UUID bookId);
+    
+    CompletableFuture<Void> deleteAllByBookId(UUID bookId);
 }
