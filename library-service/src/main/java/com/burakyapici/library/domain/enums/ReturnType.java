@@ -4,15 +4,15 @@ import lombok.Getter;
 
 @Getter
 public enum ReturnType {
-    LOST(BorrowStatus.LOST, BookCopyStatus.LOST),
-    RETURNED_DAMAGED(BorrowStatus.RETURNED_DAMAGED, BookCopyStatus.IN_REPAIR),
-    RETURNED(BorrowStatus.RETURNED, BookCopyStatus.AVAILABLE);
+    NORMAL(BookCopyStatus.AVAILABLE, BorrowStatus.RETURNED),
+    DAMAGED(BookCopyStatus.IN_REPAIR, BorrowStatus.RETURNED_DAMAGED),
+    LOST(BookCopyStatus.LOST, BorrowStatus.LOST);
 
-    private final BorrowStatus    borrowStatus;
-    private final BookCopyStatus  bookCopyStatus;
+    private final BookCopyStatus bookCopyStatus;
+    private final BorrowStatus borrowStatus;
 
-    ReturnType(BorrowStatus bs, BookCopyStatus bcs) {
-        this.borrowStatus   = bs;
-        this.bookCopyStatus = bcs;
+    ReturnType(BookCopyStatus bookCopyStatus, BorrowStatus borrowStatus) {
+        this.bookCopyStatus = bookCopyStatus;
+        this.borrowStatus = borrowStatus;
     }
 }

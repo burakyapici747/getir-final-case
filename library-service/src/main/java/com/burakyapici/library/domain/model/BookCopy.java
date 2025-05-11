@@ -28,11 +28,13 @@ public class BookCopy extends BaseModel {
     @Column(name = "availability_status", length = 20, nullable = false)
     private BookCopyStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false, targetEntity = Book.class)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false, targetEntity = Book.class)
     @JoinColumn(name = "book_id", referencedColumnName = "id")
     private Book book;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_copy_id", referencedColumnName = "id")
+    @OneToMany(mappedBy = "bookCopy", fetch = FetchType.LAZY)
     private Set<Borrowing> borrowings = new HashSet<>();
+    
+    @OneToMany(mappedBy = "reservedBookCopy", fetch = FetchType.LAZY)
+    private Set<WaitList> waitLists = new HashSet<>();
 }

@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Service
 public class JwtServiceImpl implements JwtService {
-    private static final Duration ACCESS_TTL = Duration.ofMinutes(5);
+    private static final Duration ACCESS_TTL = Duration.ofMinutes(3600);
     private final JwtEncoder encoder;
     private final JwtDecoder decoder;
 

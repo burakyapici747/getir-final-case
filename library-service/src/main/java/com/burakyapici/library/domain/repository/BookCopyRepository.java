@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,8 +24,7 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, UUID>, JpaSp
     Page<BookCopy> findAll(Specification<BookCopy> specification, Pageable pageable);
 
     @Modifying
-    @Query(
-        value =
+    @Query(value =
            """
                DELETE FROM book_copy
                WHERE book_id = :bookId
@@ -32,4 +32,6 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, UUID>, JpaSp
         nativeQuery = true
     )
     void deleteByBookId(@Param(value = "bookId") UUID bookId);
+
+    List<BookCopy> findByBookIdAndStatus(UUID bookId, BookCopyStatus status);
 }

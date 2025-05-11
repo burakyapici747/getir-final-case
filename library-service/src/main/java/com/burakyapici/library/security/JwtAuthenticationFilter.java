@@ -32,14 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest  request,
-            HttpServletResponse response,
-            FilterChain         filterChain
+        HttpServletRequest  request,
+        HttpServletResponse response,
+        FilterChain         filterChain
     ) throws ServletException, IOException {
         Optional.ofNullable(request.getHeader(HttpHeaders.AUTHORIZATION))
-                .filter(h -> h.startsWith(BEARER_PREFIX))
-                .map(h -> h.substring(BEARER_PREFIX.length()))
-                .ifPresent(this::authenticateToken);
+            .filter(h -> h.startsWith(BEARER_PREFIX))
+            .map(h -> h.substring(BEARER_PREFIX.length()))
+            .ifPresent(this::authenticateToken);
 
         filterChain.doFilter(request, response);
     }

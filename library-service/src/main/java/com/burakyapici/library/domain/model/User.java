@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -75,5 +76,10 @@ public class User extends BaseModel {
     @Transient
     public boolean isLibrarian() {
         return role == Role.LIBRARIAN;
+    }
+
+    @Override
+    public UUID getId() {
+        return super.getId();
     }
 }

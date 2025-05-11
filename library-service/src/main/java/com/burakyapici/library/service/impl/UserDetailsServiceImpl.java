@@ -23,6 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             .orElseThrow(() -> new EntityNotFoundException("User not found with email"));
 
         return UserDetailsImpl.builder()
+            .id(user.getId())
             .email(user.getEmail())
             .password(user.getPasswordHash())
             .authorities(user.getAuthorities())

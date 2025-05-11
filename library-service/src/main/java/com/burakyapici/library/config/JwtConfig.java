@@ -38,9 +38,9 @@ public class JwtConfig {
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 
         JWK jwk = new RSAKey.Builder(publicKey)
-                .privateKey(privateKey)
-                .keyID(UUID.randomUUID().toString())
-                .build();
+            .privateKey(privateKey)
+            .keyID(UUID.randomUUID().toString())
+            .build();
 
         JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwkSource);
