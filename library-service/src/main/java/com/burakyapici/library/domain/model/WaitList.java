@@ -27,4 +27,8 @@ public class WaitList extends BaseModel {
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private WaitListStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_copy_id")
+    private BookCopy reservedBookCopy;
 }

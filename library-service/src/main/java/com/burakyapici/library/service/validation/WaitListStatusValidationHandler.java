@@ -8,12 +8,11 @@ import org.springframework.stereotype.Component;
 public class WaitListStatusValidationHandler extends AbstractBorrowValidationHandler {
     @Override
     protected void performValidation(BorrowHandlerRequest request) {
-
+        // Bu validasyon, kitabın bekleme listesinde olup olmadığını kontrol eder
+        // Eğer kitap bekleme listesindeyse ve belirli bir kullanıcı için ayrılmışsa,
+        // bu kullanıcının o kitabı ödünç alabilmesi için bekleme listesinde kaydı olmalıdır
+        request.waitList().orElseThrow(
+            () -> new IllegalArgumentException("WaitList status is required for this operation.")
+        );
     }
-//    @Override
-//    protected void performValidation(BorrowHandlerRequest request) {
-//        request.waitListOptional().orElseThrow(
-//            () -> new IllegalArgumentException("WaitList status is required for this operation.")
-//        );
-//    }
 }

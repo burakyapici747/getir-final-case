@@ -7,6 +7,7 @@ import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.WaitList;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,7 +20,7 @@ public interface WaitListService {
     PageableDto<WaitListDto> getAllWaitLists(int currentPage, int pageSize);
     boolean existsWaitListForBookId(UUID bookCopyId);
     List<WaitListDto> getByBookIdAndStatus(UUID bookId, WaitListStatus waitListStatus);
-    WaitList getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus waitListStatus);
+    Optional<WaitList> getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus status);
     WaitList saveWaitList(WaitList waitList);
     void deleteByBookId(UUID bookId);
 }

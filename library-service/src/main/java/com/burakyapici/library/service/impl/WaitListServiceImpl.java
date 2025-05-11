@@ -9,12 +9,15 @@ import com.burakyapici.library.common.mapper.WaitListMapper;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.dto.WaitListDto;
 import com.burakyapici.library.domain.enums.BookStatus;
+import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.enums.PatronStatus;
 import com.burakyapici.library.domain.enums.Role;
 import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.Book;
+import com.burakyapici.library.domain.model.BookCopy;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.model.WaitList;
+import com.burakyapici.library.domain.repository.BookCopyRepository;
 import com.burakyapici.library.domain.repository.WaitListRepository;
 import com.burakyapici.library.exception.BookStatusValidationException;
 import com.burakyapici.library.exception.PatronStatusValidationException;
@@ -38,16 +41,19 @@ public class WaitListServiceImpl implements WaitListService {
     private final BookService bookService;
     private final UserService userService;
     private final WaitListRepository waitListRepository;
+    private final BookCopyRepository bookCopyRepository;
 
     public WaitListServiceImpl(
         WaitListRepository waitListRepository,
         @Lazy
         BookService bookService,
-        UserService userService
+        UserService userService,
+        BookCopyRepository bookCopyRepository
     ) {
         this.waitListRepository = waitListRepository;
         this.bookService = bookService;
         this.userService = userService;
+        this.bookCopyRepository = bookCopyRepository;
     }
 
     @Override
@@ -70,7 +76,7 @@ public class WaitListServiceImpl implements WaitListService {
         });
 
         //TODO: Wait List LIMIT kontrolu yapilacak.
-        //TODO: Book availability (müsait kopya var mı) kontrolünü ekleyin (BookCopyService kullanarak).
+        //TODO: Book availability (müsait kopya var mı) kontrolünü ekleyin (BookCopyService kullanarak) eger musait yoksa .
         //TODO: Patron'un herhangi bir cezasi var mi kontrolu
 
         WaitList waitList = WaitList.builder()
@@ -190,8 +196,8 @@ public class WaitListServiceImpl implements WaitListService {
     }
 
     @Override
-    public WaitList getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus waitListStatus) {
-        return waitListRepository.findByUserIdAndBookIdAndStatus(userId, bookId, waitListStatus);
+    public Optional<WaitList> getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus waitListStatus) {
+        return waitListRepository.findByUserIdAndBookIdAndStatus(userId, bookId, waitListStatus.name());
     }
 
     @Override
@@ -202,6 +208,32 @@ public class WaitListServiceImpl implements WaitListService {
     @Override
     public void deleteByBookId(UUID bookId) {
         waitListRepository.deleteByBookId(bookId);
+    }
+
+    private void processWaitListQueueForBook(UUID bookId) {
+        List<WaitList> waitingList = waitListRepository.findByBookIdAndStatusOrderByStartDateAsc(
+            bookId, WaitListStatus.WAITING.name());
+        
+        if(waitingList.isEmpty()) {
+            return;
+        }
+        
+        List<BookCopy> availableCopies = bookCopyRepository.findByBookIdAndStatus(
+            bookId, BookCopyStatus.AVAILABLE);
+        
+        if(availableCopies.isEmpty()) {
+            return;
+        }
+        
+        WaitList nextWaitList = waitingList.getFirst();
+        BookCopy bookCopy = availableCopies.getFirst();
+        
+        nextWaitList.setReservedBookCopy(bookCopy);
+        nextWaitList.setStatus(WaitListStatus.READY_FOR_PICKUP);
+        waitListRepository.save(nextWaitList);
+        
+        bookCopy.setStatus(BookCopyStatus.ON_HOLD);
+        bookCopyRepository.save(bookCopy);
     }
 
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
@@ -85,7 +86,15 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
         """,
         nativeQuery = true
     )
-    WaitList findByUserIdAndBookIdAndStatus(@Param("userId") UUID userId, @Param("bookId") UUID bookId, @Param("status") WaitListStatus status);
+    Optional<WaitList> findByUserIdAndBookIdAndStatus(
+        @Param(value = "userId")
+        UUID userId,
+        @Param(value = "bookId")
+        UUID bookId,
+        @Param(value = "status")
+        String status
+    );
+
 
     @Modifying
     @Query(value =
@@ -95,4 +104,21 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
         """
     , nativeQuery = true)
     void deleteByBookId(@Param(value = "bookId") UUID bookId);
+
+    List<WaitList> findByStatusAndStartDateBefore(WaitListStatus status, LocalDateTime date);
+
+
+    @Query(
+            value = """
+        SELECT * FROM wait_list 
+        WHERE book_id = :bookId 
+        AND status = :status 
+        ORDER BY start_date ASC
+        """,
+            nativeQuery = true
+    )
+    List<WaitList> findByBookIdAndStatusOrderByStartDateAsc(
+        @Param("bookId") UUID bookId,
+        @Param("status") String status
+    );
 }
