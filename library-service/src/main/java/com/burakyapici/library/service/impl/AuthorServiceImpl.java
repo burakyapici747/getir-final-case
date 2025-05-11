@@ -1,5 +1,7 @@
 package com.burakyapici.library.service.impl;
 
+import com.burakyapici.library.api.advice.DataConflictException;
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import com.burakyapici.library.api.dto.request.AuthorCreateRequest;
 import com.burakyapici.library.api.dto.request.AuthorSearchCriteria;
 import com.burakyapici.library.api.dto.request.AuthorUpdateRequest;
@@ -11,7 +13,6 @@ import com.burakyapici.library.domain.model.Author;
 import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.repository.AuthorRepository;
 import com.burakyapici.library.domain.specification.AuthorSpecifications;
-import com.burakyapici.library.exception.AuthorNotFoundException;
 import com.burakyapici.library.service.AuthorService;
 import com.burakyapici.library.service.BookService;
 import org.springframework.data.domain.Page;
@@ -98,7 +99,7 @@ public class AuthorServiceImpl implements AuthorService {
                 .filter(id -> !foundAuthorIds.contains(id))
                 .collect(Collectors.toSet());
 
-            throw new AuthorNotFoundException(
+            throw new EntityNotFoundException(
                 "The following author IDs could not be found: " +
                     missingAuthorIds.stream()
                         .map(UUID::toString)
@@ -136,7 +137,7 @@ public class AuthorServiceImpl implements AuthorService {
 
         bookService.findBookByIdAndAuthorId(bookId, authorId)
             .ifPresent(b -> {
-                throw new IllegalArgumentException("Book already exists in author");
+                throw new DataConflictException("Book already exists in author");
             });
 
         book.getAuthors().add(author);
@@ -158,7 +159,7 @@ public class AuthorServiceImpl implements AuthorService {
         Book book = bookService.getBookByIdOrElseThrow(bookId);
 
         bookService.findBookByIdAndAuthorId(bookId, authorId)
-            .orElseThrow(() -> new IllegalArgumentException("Book not found in author"));
+            .orElseThrow(() -> new EntityNotFoundException("Book not found in author"));
 
         book.getAuthors().remove(author);
 
@@ -176,12 +177,12 @@ public class AuthorServiceImpl implements AuthorService {
 
     private Author findByIdOrElseThrow(UUID id){
         return authorRepository.findById(id)
-            .orElseThrow(() -> new AuthorNotFoundException("Author not found with id: " + id));
+            .orElseThrow(() -> new EntityNotFoundException("Author not found with id: " + id));
     }
 
     private void validateAuthorExists(UUID authorId) {
         if (!authorRepository.existsById(authorId)) {
-            throw new AuthorNotFoundException("Author not found with id: " + authorId);
+            throw new EntityNotFoundException("Author not found with id: " + authorId);
         }
     }
 }

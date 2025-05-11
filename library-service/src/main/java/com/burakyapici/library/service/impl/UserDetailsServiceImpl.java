@@ -1,5 +1,6 @@
 package com.burakyapici.library.service.impl;
 
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.repository.UserRepository;
 import com.burakyapici.library.security.UserDetailsImpl;
@@ -19,7 +20,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email"));
+            .orElseThrow(() -> new EntityNotFoundException("User not found with email"));
 
         return UserDetailsImpl.builder()
             .email(user.getEmail())

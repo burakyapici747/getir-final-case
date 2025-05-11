@@ -1,9 +1,12 @@
 package com.burakyapici.library.api.dto.response;
 
+import java.util.UUID;
+
 public record RegisterResponse(
-    String token,
+    UUID id,
     String email,
     String firstName,
     String lastName,
-    String role
+    String role,
+    String token
 ) {}

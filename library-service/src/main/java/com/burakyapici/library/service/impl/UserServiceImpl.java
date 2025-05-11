@@ -1,16 +1,17 @@
 package com.burakyapici.library.service.impl;
 
+import com.burakyapici.library.api.advice.DataConflictException;
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import com.burakyapici.library.api.dto.request.RegisterRequest;
 import com.burakyapici.library.api.dto.request.UserUpdateRequest;
 import com.burakyapici.library.common.mapper.UserMapper;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.dto.UserDetailDto;
 import com.burakyapici.library.domain.dto.UserDto;
+import com.burakyapici.library.domain.enums.PatronStatus;
 import com.burakyapici.library.domain.enums.Role;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.repository.UserRepository;
-import com.burakyapici.library.exception.UserAlreadyExistException;
-import com.burakyapici.library.exception.UserNotFoundException;
 import com.burakyapici.library.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,7 +41,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserByIdOrElseThrow(UUID id) {
         return userRepository.findById(id)
-            .orElseThrow(() -> new UserNotFoundException("User not found with id!"));
+            .orElseThrow(() -> new EntityNotFoundException("User not found with id!"));
     }
 
     @Override
@@ -57,6 +58,7 @@ public class UserServiceImpl implements UserService {
             .phoneNumber(registerRequest.phoneNumber())
             .address(registerRequest.address())
             .role(Role.PATRON)
+            .patronStatus(PatronStatus.ACTIVE)
             .build();
 
         return userRepository.save(newUser);
@@ -101,13 +103,13 @@ public class UserServiceImpl implements UserService {
 
     private void ensureEmailNotTaken(String email) {
         if (userRepository.existsByEmail(email)) {
-            throw new UserAlreadyExistException("User already exists with email!");
+            throw new DataConflictException("User already exists with email!");
         }
     }
 
     private void ensurePhoneNumberNotTaken(String phoneNumber) {
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new UserAlreadyExistException("User already exists with phone number!");
+            throw new DataConflictException("User already exists with phone number!");
         }
     }
 
@@ -119,11 +121,11 @@ public class UserServiceImpl implements UserService {
 
     private User findByEmail(String email){
         return userRepository.findByEmail(email)
-            .orElseThrow( () -> new UserNotFoundException("User not found with email!"));
+            .orElseThrow( () -> new EntityNotFoundException("User not found with email!"));
     }
 
     private User findById(UUID id){
         return userRepository.findById(id)
-            .orElseThrow( () -> new UserNotFoundException("User not found with id!"));
+            .orElseThrow( () -> new EntityNotFoundException("User not found with id!"));
     }
 }

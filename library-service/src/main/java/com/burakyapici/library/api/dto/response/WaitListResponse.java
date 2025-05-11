@@ -1,5 +1,8 @@
 package com.burakyapici.library.api.dto.response;
 
-public record WaitListResponse(
+import java.util.UUID;
 
+public record WaitListResponse(
+    UUID id
+    //TODO: gerekli alanlari ekle
 ) {}

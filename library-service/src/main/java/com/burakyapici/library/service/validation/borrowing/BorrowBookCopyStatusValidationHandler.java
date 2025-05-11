@@ -1,10 +1,11 @@
 package com.burakyapici.library.service.validation.borrowing;
 
+import com.burakyapici.library.api.advice.DataConflictException;
+import com.burakyapici.library.api.advice.UnprocessableEntityException;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.model.BookCopy;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.model.WaitList;
-import com.burakyapici.library.exception.BookCopyNotAvailableException;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -22,12 +23,12 @@ public class BorrowBookCopyStatusValidationHandler extends AbstractBorrowValidat
             WaitList reservedForWaitList = request.waitList();
 
             if(Objects.isNull(reservedForWaitList)){
-                throw new IllegalStateException("Book copy is reserved for another user.");
+                throw new DataConflictException("Book copy is reserved for another user.");
             }
 
             return;
         }else{
-            throw new BookCopyNotAvailableException(bookCopy.getStatus().getDescription());
+            throw new UnprocessableEntityException(bookCopy.getStatus().getDescription());
         }
     }
 }

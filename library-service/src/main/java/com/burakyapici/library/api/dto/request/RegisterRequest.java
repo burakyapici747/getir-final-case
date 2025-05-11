@@ -1,37 +1,38 @@
 package com.burakyapici.library.api.dto.request;
 
+import com.burakyapici.library.api.validation.annotation.PasswordMatch;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+@PasswordMatch
 public record RegisterRequest(
-    @NotBlank(message = "Email is required")
-    @Email(message = "Please provide a valid email address")
-    @Size(max = 100, message = "Email cannot exceed 100 characters")
+    @NotBlank(message = "Email cannot be empty")
+    @Email(message = "Email should be valid")
     String email,
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, max = 255, message = "Password must be between 8 and 255 characters")
-    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*#?&]{8,}$",
-            message = "Password must contain at least one letter and one number")
+    @NotBlank(message = "Password cannot be empty")
+    @Size(min = 8, max = 30, message = "Password must be between 8 and 30 characters")
     String password,
 
-    @NotBlank(message = "Password confirmation is required")
+    @NotBlank(message = "Password confirmation cannot be empty")
     String passwordConfirmation,
 
-    @NotBlank(message = "First name is required")
-    @Size(max = 50, message = "First name cannot exceed 50 characters")
+    @NotBlank(message = "First name cannot be empty")
+    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     String firstName,
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 50, message = "Last name cannot exceed 50 characters")
+    @NotBlank(message = "Last name cannot be empty")
+    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     String lastName,
 
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\d{10,15}$", message = "Phone number must be between 10 and 15 digits")
+    @NotBlank(message = "Phone number cannot be empty")
+    @Pattern(regexp = "^(\\+\\d{1,3}( )?)?((\\(\\d{3}\\))|\\d{3})[- .]?\\d{3}[- .]?\\d{4}$",
+            message = "Phone number is not valid")
     String phoneNumber,
 
+    @NotBlank(message = "Address cannot be empty")
     @Size(max = 255, message = "Address cannot exceed 255 characters")
     String address
-){}
+) {}

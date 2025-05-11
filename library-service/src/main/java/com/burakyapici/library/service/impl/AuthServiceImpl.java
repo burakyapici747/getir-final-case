@@ -4,6 +4,7 @@ import com.burakyapici.library.api.dto.request.LoginRequest;
 import com.burakyapici.library.api.dto.request.RegisterRequest;
 import com.burakyapici.library.api.dto.response.LoginResponse;
 import com.burakyapici.library.api.dto.response.RegisterResponse;
+import com.burakyapici.library.domain.enums.PatronStatus;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.AuthService;
@@ -60,12 +61,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public RegisterResponse register(RegisterRequest registerRequest) {
         User newUser = userService.createUser(registerRequest);
+
         return new RegisterResponse(
-            jwtService.generateAccessToken(newUser.getEmail()),
-                newUser.getEmail(),
-                newUser.getFirstName(),
-                newUser.getLastName(),
-                newUser.getRole().getAuthority()
+            newUser.getId(),
+            newUser.getEmail(),
+            newUser.getFirstName(),
+            newUser.getLastName(),
+            newUser.getRole().getAuthority(),
+            jwtService.generateAccessToken(newUser.getEmail())
         );
     }
 }

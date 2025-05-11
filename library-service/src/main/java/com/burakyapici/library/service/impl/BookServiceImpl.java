@@ -1,5 +1,7 @@
 package com.burakyapici.library.service.impl;
 
+import com.burakyapici.library.api.advice.DataConflictException;
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import com.burakyapici.library.api.dto.request.BookCreateRequest;
 import com.burakyapici.library.api.dto.request.BookSearchCriteria;
 import com.burakyapici.library.api.dto.request.BookUpdateRequest;
@@ -14,7 +16,6 @@ import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.Genre;
 import com.burakyapici.library.domain.repository.BookRepository;
 import com.burakyapici.library.domain.specification.BookSpecifications;
-import com.burakyapici.library.exception.BookNotFoundException;
 import com.burakyapici.library.service.*;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -174,23 +175,22 @@ public class BookServiceImpl implements BookService {
         borrowingService.deleteAllByBookId(id);
         bookCopyService.deleteAllByBookId(id);
         bookRepository.deleteById(id);
-
     }
 
     private Book findById(UUID id) {
         return bookRepository.findById(id)
-            .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
+            .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + id));
     }
 
     private void validateBookForCreation(BookCreateRequest bookCreateRequest) {
         if(bookRepository.existsByIsbnOrTitle(bookCreateRequest.isbn(), bookCreateRequest.title())) {
-            throw new IllegalArgumentException("Book with the same ISBN or title already exists.");
+            throw new DataConflictException("Book with the same ISBN or title already exists.");
         }
     }
 
     private void validateBookExistsById(UUID id) {
         if(!bookRepository.existsById(id)) {
-            throw new BookNotFoundException("Book not found with id: " + id);
+            throw new EntityNotFoundException("Book not found with id: " + id);
         }
     }
 }

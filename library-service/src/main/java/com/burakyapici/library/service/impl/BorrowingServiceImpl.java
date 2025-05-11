@@ -87,6 +87,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         borrowValidationHandler.handle(borrowHandlerRequest);
 
         LocalDateTime borrowDate = LocalDateTime.now();
+        //TODO: Sistem tarafindan belirlenen bir sure olacak
         LocalDateTime dueDate = borrowDate.plusDays(15);
 
         Borrowing borrowing = Borrowing.builder()

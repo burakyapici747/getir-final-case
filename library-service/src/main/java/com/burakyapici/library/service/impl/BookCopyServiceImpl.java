@@ -1,5 +1,7 @@
 package com.burakyapici.library.service.impl;
 
+import com.burakyapici.library.api.advice.DataConflictException;
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import com.burakyapici.library.api.dto.request.BookAvailabilityUpdateEvent;
 import com.burakyapici.library.api.dto.request.BookCopyCreateRequest;
 import com.burakyapici.library.api.dto.request.BookCopySearchCriteria;
@@ -12,7 +14,6 @@ import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.BookCopy;
 import com.burakyapici.library.domain.repository.BookCopyRepository;
 import com.burakyapici.library.domain.specification.BookCopySpecifications;
-import com.burakyapici.library.exception.BookCopyNotFoundException;
 import com.burakyapici.library.service.BookCopyService;
 import com.burakyapici.library.service.BookService;
 import org.springframework.context.annotation.Lazy;
@@ -165,17 +166,17 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     private BookCopy findByIdOrElseThrow(UUID id) {
         return bookCopyRepository.findById(id)
-            .orElseThrow(() -> new BookCopyNotFoundException("Book copy not found with id: " + id));
+            .orElseThrow(() -> new EntityNotFoundException("Book copy not found with id: " + id));
     }
 
     private BookCopy findByBarcodeOrElseThrow(String barcode) {
         return bookCopyRepository.findByBarcode(barcode)
-            .orElseThrow(() -> new BookCopyNotFoundException("Book copy not found with barcode: " + barcode));
+            .orElseThrow(() -> new EntityNotFoundException("Book copy not found with barcode: " + barcode));
     }
 
     private void validateBookCopyIsNotExistsByBarcode(String barcode){
         if(bookCopyRepository.existsByBarcode(barcode)){
-            throw new BookCopyNotFoundException("Book copy already exists with barcode: " + barcode);
+            throw new DataConflictException("Book copy already exists with barcode: " + barcode);
         }
     }
 }

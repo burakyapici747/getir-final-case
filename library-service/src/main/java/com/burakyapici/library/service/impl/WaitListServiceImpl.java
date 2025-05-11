@@ -1,5 +1,9 @@
 package com.burakyapici.library.service.impl;
 
+import com.burakyapici.library.api.advice.DataConflictException;
+import com.burakyapici.library.api.advice.EntityNotFoundException;
+import com.burakyapici.library.api.advice.UnauthorizedResourceAccessException;
+import com.burakyapici.library.api.advice.UnprocessableEntityException;
 import com.burakyapici.library.api.dto.request.PlaceHoldRequest;
 import com.burakyapici.library.common.mapper.WaitListMapper;
 import com.burakyapici.library.domain.dto.PageableDto;
@@ -62,7 +66,7 @@ public class WaitListServiceImpl implements WaitListService {
             placeHoldRequest.bookId(),
             Set.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
         ).ifPresent(waitList -> {
-            throw new IllegalStateException("There is already a wait list for this book.");
+            throw new DataConflictException("There is already a wait list for this book.");
         });
 
         //TODO: Wait List LIMIT kontrolu yapilacak.
@@ -86,11 +90,11 @@ public class WaitListServiceImpl implements WaitListService {
         User patron = userService.getUserByIdOrElseThrow(patronId);
 
         if( !patron.getId().equals(waitList.getUser().getId()) && Role.PATRON.equals(patron.getRole()) ){
-            throw new IllegalStateException("You cannot cancel a wait list that does not belong to you.");
+            throw new UnauthorizedResourceAccessException("You cannot cancel a wait list that does not belong to you.");
         }
 
         if( !(WaitListStatus.WAITING.equals(waitList.getStatus()) || WaitListStatus.READY_FOR_PICKUP.equals(waitList.getStatus())) ){
-            throw new IllegalStateException("You can only cancel a wait list that is in WAITING or READY_FOR_PICKUP status.");
+            throw new UnprocessableEntityException("You can only cancel a wait list that is in WAITING or READY_FOR_PICKUP status.");
         }
 
         //TODO: Eğer iptal edilen bekleme kaydının önceki durumu READY_FOR_PICKUP ise, ilgili BookCopy'yi serbest
@@ -202,6 +206,6 @@ public class WaitListServiceImpl implements WaitListService {
 
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {
         return waitListRepository.findById(waitListId)
-            .orElseThrow(() -> new WaitListNotFoundException("Wait list not found with ID: " + waitListId));
+            .orElseThrow(() -> new EntityNotFoundException("Wait list not found with ID: " + waitListId));
     }
 }

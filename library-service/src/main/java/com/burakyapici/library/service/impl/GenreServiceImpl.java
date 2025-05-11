@@ -1,8 +1,8 @@
 package com.burakyapici.library.service.impl;
 
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import com.burakyapici.library.domain.model.Genre;
 import com.burakyapici.library.domain.repository.GenreRepository;
-import com.burakyapici.library.exception.GenreNotFoundException;
 import com.burakyapici.library.service.GenreService;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ public class GenreServiceImpl implements GenreService {
     @Override
     public Genre getGenreByIdOrElseThrow(UUID id) {
         return genreRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Genre not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Genre not found"));
     }
 
     public Set<Genre> getGenresByIdsOrElseThrow(Set<UUID> genreIds) {
@@ -38,7 +38,7 @@ public class GenreServiceImpl implements GenreService {
                     .filter(id -> !foundGenreIds.contains(id))
                     .collect(Collectors.toSet());
 
-            throw new GenreNotFoundException(
+            throw new EntityNotFoundException(
                 "The following genre IDs could not be found: " +
                     missingGenreIds.stream()
                         .map(UUID::toString)

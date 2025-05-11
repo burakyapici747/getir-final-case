@@ -23,12 +23,12 @@ public class JwtServiceImpl implements JwtService {
     public String generateAccessToken(String username) {
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("library-service")
-                .issuedAt(now)
-                .expiresAt(now.plus(ACCESS_TTL))
-                .subject(username)
-                .claim("type", "access")
-                .build();
+            .issuer("library-service")
+            .issuedAt(now)
+            .expiresAt(now.plus(ACCESS_TTL))
+            .subject(username)
+            .claim("type", "access")
+            .build();
         return encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 

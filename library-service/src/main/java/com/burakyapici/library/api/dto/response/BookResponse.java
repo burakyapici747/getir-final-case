@@ -6,9 +6,10 @@ import com.burakyapici.library.domain.enums.BookStatus;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public record BookResponse(
-    String id,
+    UUID id,
     String title,
     String isbn,
     BookStatus bookStatus,

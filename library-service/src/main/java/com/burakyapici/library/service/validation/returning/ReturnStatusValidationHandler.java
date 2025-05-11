@@ -1,5 +1,6 @@
 package com.burakyapici.library.service.validation.returning;
 
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -9,7 +10,7 @@ public class ReturnStatusValidationHandler extends AbstractReturnValidationHandl
     @Override
     protected void performValidation(ReturnHandlerRequest request) {
         if(Objects.isNull(request.borrowing())){
-            throw new IllegalStateException("BorrowHandlerRequest must contain a return.");
+            throw new EntityNotFoundException("Borrowing not found");
         }
     }
 }
