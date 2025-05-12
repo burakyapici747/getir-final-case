@@ -33,5 +33,16 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, UUID>, JpaSp
     )
     void deleteByBookId(@Param(value = "bookId") UUID bookId);
 
-    List<BookCopy> findByBookIdAndStatus(UUID bookId, BookCopyStatus status);
+    @Query(value =
+        """
+            SELECT * FROM book_copy 
+            WHERE book_id = :bookId 
+            AND availability_status = :status
+        """,
+            nativeQuery = true
+    )
+    List<BookCopy> findByBookIdAndStatus(
+        @Param("bookId") UUID bookId,
+        @Param("status") String status
+    );
 }

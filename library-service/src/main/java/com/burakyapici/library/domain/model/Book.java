@@ -83,8 +83,7 @@ public class Book extends BaseModel {
     )
     private Set<Genre> genres = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY, targetEntity = WaitList.class)
-    @JoinColumn(name = "book_id", referencedColumnName = "id")
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY, targetEntity = WaitList.class)
     private Set<WaitList> waitLists = new HashSet<>();
 
     @OneToMany(

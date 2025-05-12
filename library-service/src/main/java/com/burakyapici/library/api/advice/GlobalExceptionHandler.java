@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +18,6 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    //TODO: Move this to a properties file
-    private static final String ERROR_BASE_URI = "https://api.librarymanagement.com/errors/";
-
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleEntityNotFoundException(EntityNotFoundException ex) {
         ProblemDetail pd = createProblemDetail(
@@ -166,7 +161,6 @@ public class GlobalExceptionHandler {
         String title
     ) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, detail);
-        pd.setType(URI.create(ERROR_BASE_URI + errorCode));
         pd.setTitle(title);
         pd.setInstance(ServletUriComponentsBuilder
             .fromCurrentRequest()

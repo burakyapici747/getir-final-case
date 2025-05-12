@@ -7,6 +7,7 @@ import com.burakyapici.library.common.mapper.BorrowMapper;
 import com.burakyapici.library.domain.dto.BorrowDto;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.ReturnType;
 import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.*;
 import com.burakyapici.library.domain.repository.BorrowingRepository;
@@ -103,10 +104,11 @@ public class BorrowingServiceImpl implements BorrowingService {
             barcode,
             patron.getId()
         );
-
         validateReturnRequest(bookCopy, book, patron, borrowing);
 
-        bookCopy.setStatus(borrowReturnRequest.returnType().getBookCopyStatus());
+        BookCopyStatus bookCopyStatus = processWaitListAndReturnBookCopyStatus(book.getId(), bookCopy, borrowReturnRequest.returnType());
+
+        bookCopy.setStatus(bookCopyStatus);
         bookCopyService.saveBookCopy(bookCopy);
 
         LocalDateTime returnDateTime = LocalDateTime.now();
@@ -120,6 +122,23 @@ public class BorrowingServiceImpl implements BorrowingService {
         publishBookAvailabilityUpdateEvent(bookCopy);
 
         return BorrowMapper.INSTANCE.borrowToBorrowDto(savedBorrowing);
+    }
+
+    private BookCopyStatus processWaitListAndReturnBookCopyStatus(UUID bookId, BookCopy bookCopy, ReturnType returnType) {
+        if(ReturnType.NORMAL.equals(returnType)) {
+            Optional<WaitList> waitListSuitableToProcessOptional =
+                    waitListService.getTopByBookIdAndStatusOrderByStartDateAsc(bookId, WaitListStatus.WAITING);
+            if(waitListSuitableToProcessOptional.isPresent()) {
+                LocalDateTime endLocalDateTime = LocalDateTime.now().plusDays(3L);
+                WaitList waitList = waitListSuitableToProcessOptional.get();
+                waitList.setStatus(WaitListStatus.READY_FOR_PICKUP);
+                waitList.setReservedBookCopy(bookCopy);
+                waitList.setEndDate(endLocalDateTime);
+                waitListService.saveWaitList(waitList);
+                return BookCopyStatus.ON_HOLD;
+            }
+        }
+        return returnType.getBookCopyStatus();
     }
 
     @Override

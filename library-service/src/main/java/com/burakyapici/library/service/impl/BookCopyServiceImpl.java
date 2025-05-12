@@ -110,7 +110,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     public List<BookCopy> findByBookIdAndStatus(UUID bookId, BookCopyStatus status) {
-        return bookCopyRepository.findByBookIdAndStatus(bookId, status);
+        return bookCopyRepository.findByBookIdAndStatus(bookId, status.name());
     }
 
     @Override
