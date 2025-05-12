@@ -20,7 +20,7 @@ public class ExistingWaitListValidationHandler extends AbstractWaitListValidatio
         waitListRepository.findWaitListByBookIdAndUserIdAndWaitListStatusIn(
             request.bookId(),
             request.patron().getId(),
-            Set.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
+            Set.of(WaitListStatus.WAITING.name(), WaitListStatus.READY_FOR_PICKUP.name())
         ).ifPresent(waitList -> {
             throw new DataConflictException("There is already a wait list for this book.");
         });

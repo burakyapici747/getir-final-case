@@ -38,7 +38,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<ApiResponse<UserDetailResponse>> getUserById(@PathVariable UUID id){
+    public ResponseEntity<ApiResponse<UserDetailResponse>> getUserById(@PathVariable("id") UUID id){
         UserDetailResponse user = UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(
             userService.getUserDetailById(id)
         );
@@ -59,7 +59,7 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<UserDetailResponse>> updateUser(
-        @PathVariable UUID id,
+        @PathVariable("id") UUID id,
         @RequestBody UserUpdateRequest userUpdateRequest
     ){
         UserDetailResponse updatedUser = UserMapper.INSTANCE.userDetailDtoToUserDetailResponse(

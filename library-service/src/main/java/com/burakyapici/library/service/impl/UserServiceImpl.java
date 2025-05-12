@@ -92,7 +92,7 @@ public class UserServiceImpl implements UserService {
 
         UserMapper.INSTANCE.updateUserFromUserUpdateRequest(userUpdateRequest, user);
 
-        return UserMapper.INSTANCE.userToUserDetailDto(user);
+        return UserMapper.INSTANCE.userToUserDetailDto(userRepository.save(user));
     }
 
     @Override
