@@ -1,6 +1,13 @@
 package com.burakyapici.library.service.validation;
 
 import com.burakyapici.library.service.validation.waitlist.*;
+import com.burakyapici.library.service.validation.waitlist.cancel.CancelHoldValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.cancel.WaitListOwnerCancelValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.cancel.WaitListStatusCancelValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.hold.AvailableCopyValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.hold.BookStatusValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.hold.ExistingWaitListValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.hold.PatronStatusValidationHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

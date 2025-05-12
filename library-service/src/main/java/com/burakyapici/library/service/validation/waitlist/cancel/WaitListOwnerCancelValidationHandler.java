@@ -1,4 +1,4 @@
-package com.burakyapici.library.service.validation.waitlist;
+package com.burakyapici.library.service.validation.waitlist.cancel;
 
 import com.burakyapici.library.api.advice.ForbiddenAccessException;
 import com.burakyapici.library.domain.enums.Role;

@@ -43,7 +43,7 @@ public class AuthorServiceImpl implements AuthorService {
     public PageableDto<AuthorDto> getAllAuthors(int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(currentPage, pageSize);
         Page<Author> allAuthorsPage = authorRepository.findAll(pageable);
-        List<AuthorDto> authorDtoList = AuthorMapper.INSTANCE.authorListToAuthorDtoList(allAuthorsPage.getContent());
+        List<AuthorDto> authorDtoList = AuthorMapper.INSTANCE.toAuthorDtoList(allAuthorsPage.getContent());
 
         return new PageableDto<>(
             authorDtoList,
@@ -63,7 +63,7 @@ public class AuthorServiceImpl implements AuthorService {
 
         Page<Author> allAuthorPage = authorRepository.findAll(spec, pageable);
 
-        List<AuthorDto> authorDtoList = AuthorMapper.INSTANCE.authorListToAuthorDtoList(allAuthorPage.getContent());
+        List<AuthorDto> authorDtoList = AuthorMapper.INSTANCE.toAuthorDtoList(allAuthorPage.getContent());
 
         return new PageableDto<>(
             authorDtoList,
@@ -78,7 +78,7 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public AuthorDto getAuthorById(UUID id) {
         Author author = findByIdOrElseThrow(id);
-        return AuthorMapper.INSTANCE.authorToAuthorDto(author);
+        return AuthorMapper.INSTANCE.toAuthorDto(author);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class AuthorServiceImpl implements AuthorService {
             .dateOfBirth(authorCreateRequest.dateOfBirth())
             .build();
 
-        return AuthorMapper.INSTANCE.authorToAuthorDto(authorRepository.save(author));
+        return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }
 
     @Override
@@ -127,7 +127,7 @@ public class AuthorServiceImpl implements AuthorService {
 
         AuthorMapper.INSTANCE.updateAuthorFromAuthorUpdateRequest(AuthorUpdateRequest, author);
 
-        return AuthorMapper.INSTANCE.authorToAuthorDto(authorRepository.save(author));
+        return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }
 
     @Override

@@ -14,13 +14,12 @@ import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.model.WaitList;
 import com.burakyapici.library.domain.repository.WaitListRepository;
 import com.burakyapici.library.exception.PatronStatusValidationException;
-import com.burakyapici.library.exception.WaitListNotFoundException;
 import com.burakyapici.library.service.BookCopyService;
 import com.burakyapici.library.service.BookService;
 import com.burakyapici.library.service.UserService;
 import com.burakyapici.library.service.WaitListService;
-import com.burakyapici.library.service.validation.waitlist.CancelHoldHandlerRequest;
-import com.burakyapici.library.service.validation.waitlist.CancelHoldValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.cancel.CancelHoldHandlerRequest;
+import com.burakyapici.library.service.validation.waitlist.cancel.CancelHoldValidationHandler;
 import com.burakyapici.library.service.validation.waitlist.PlaceHoldHandlerRequest;
 import com.burakyapici.library.service.validation.waitlist.WaitListValidationHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,7 +35,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class WaitListServiceImpl implements WaitListService {
-    private static final int TOTAL_ELEMENTS_PER_PAGE = 10;
     private final BookService bookService;
     private final UserService userService;
     private final BookCopyService bookCopyService;
@@ -45,16 +43,16 @@ public class WaitListServiceImpl implements WaitListService {
     private final CancelHoldValidationHandler cancelHoldValidationHandler;
 
     public WaitListServiceImpl(
-            WaitListRepository waitListRepository,
-            @Lazy
-            BookService bookService,
-            UserService userService,
-            @Lazy
-            BookCopyService bookCopyService,
-            @Qualifier("waitListValidationChain")
-            WaitListValidationHandler waitListValidationHandler,
-            @Qualifier("cancelHoldValidationChain")
-            CancelHoldValidationHandler cancelHoldValidationHandler
+        WaitListRepository waitListRepository,
+        @Lazy
+        BookService bookService,
+        UserService userService,
+        @Lazy
+        BookCopyService bookCopyService,
+        @Qualifier("waitListValidationChain")
+        WaitListValidationHandler waitListValidationHandler,
+        @Qualifier("cancelHoldValidationChain")
+        CancelHoldValidationHandler cancelHoldValidationHandler
     ) {
         this.waitListRepository = waitListRepository;
         this.bookService = bookService;
@@ -74,11 +72,10 @@ public class WaitListServiceImpl implements WaitListService {
             BookCopyStatus.AVAILABLE
         );
 
-        PlaceHoldHandlerRequest validationRequest = new PlaceHoldHandlerRequest(
+        PlaceHoldHandlerRequest validationRequest = createPlaceHoldValidationRequest(
             patron,
             book,
             placeHoldRequest.bookId(),
-            Optional.empty(),
             availableCopies
         );
 
@@ -101,26 +98,10 @@ public class WaitListServiceImpl implements WaitListService {
         WaitList waitList = findWaitListByIdOrElseThrow(waitListId);
         User patron = userService.getUserByIdOrElseThrow(patronId);
 
-        CancelHoldHandlerRequest validationRequest = new CancelHoldHandlerRequest(
-            patron,
-            waitList,
-            waitListId
-        );
+        validateCancelHoldRequest(patron, waitList, waitListId);
+        handleBookCopyReleaseIfReady(waitList);
 
-        cancelHoldValidationHandler.handle(validationRequest);
-
-        if (WaitListStatus.READY_FOR_PICKUP.equals(waitList.getStatus())) {
-            BookCopy reservedBookCopy = waitList.getReservedBookCopy();
-            if (reservedBookCopy != null) {
-                reservedBookCopy.setStatus(BookCopyStatus.AVAILABLE);
-                bookCopyService.saveBookCopy(reservedBookCopy);
-            }
-        }
-
-        waitList.setStatus(WaitListStatus.CANCELLED);
-        waitList.setEndDate(LocalDateTime.now());
-
-        waitListRepository.save(waitList);
+        updateWaitListForCancellation(waitList);
     }
 
     @Override
@@ -128,20 +109,12 @@ public class WaitListServiceImpl implements WaitListService {
         List<WaitList> waitLists = waitListRepository.findAllById(waitListIds);
 
         if (waitLists.size() != waitListIds.size()) {
-            Set<UUID> foundWaitListIds = new HashSet<>();
-            for (WaitList waitList : waitLists) {
-                foundWaitListIds.add(waitList.getId());
-            }
+            Set<UUID> foundWaitListIds = extractFoundWaitListIds(waitLists);
+            Set<UUID> missingWaitListIds = findMissingWaitListIds(waitListIds, foundWaitListIds);
 
-            Set<UUID> missingWaitListIds = waitListIds.stream()
-                    .filter(id -> !foundWaitListIds.contains(id))
-                    .collect(Collectors.toSet());
-
-            throw new WaitListNotFoundException(
-                    "The following wait list IDs could not be found: " +
-                    missingWaitListIds.stream()
-                            .map(UUID::toString)
-                            .collect(Collectors.joining(", "))
+            throw new EntityNotFoundException(
+                "The following wait list IDs could not be found: " +
+                formatMissingWaitListIds(missingWaitListIds)
             );
         }
 
@@ -151,14 +124,11 @@ public class WaitListServiceImpl implements WaitListService {
     @Override
     public List<WaitListDto> getWaitListsByPatronId(UUID patronId) {
         User patron = userService.getUserByIdOrElseThrow(patronId);
-
-        if (patron.getPatronStatus() == null || !PatronStatus.ACTIVE.equals(patron.getPatronStatus())) {
-            throw new PatronStatusValidationException("Patron status is not active");
-        }
+        validatePatronStatus(patron);
 
         List<WaitList> waitLists = waitListRepository.findByUser_IdAndStatusIn(
-                patronId,
-                List.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
+            patronId,
+            List.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
         );
 
         return WaitListMapper.INSTANCE.toWaitListDtoList(waitLists);
@@ -166,39 +136,23 @@ public class WaitListServiceImpl implements WaitListService {
 
     @Override
     public PageableDto<WaitListDto> getWaitListsByBookId(UUID bookId, int currentPage, int pageSize) {
-        Pageable pageable = PageRequest.of(currentPage, pageSize);
-        Page<WaitList> allWaitListsPage = waitListRepository.findByBookId(bookId, pageable);
-        List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.toWaitListDtoList(allWaitListsPage.getContent());
+        Pageable pageable = createPageRequest(currentPage, pageSize);
+        Page<WaitList> waitListsPage = waitListRepository.findByBookId(bookId, pageable);
 
-        return new PageableDto<>(
-                waitListDto,
-                allWaitListsPage.getTotalPages(),
-                WaitListServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
-                currentPage,
-                allWaitListsPage.hasNext(),
-                allWaitListsPage.hasPrevious()
-        );
+        return createPageableResponse(waitListsPage, pageSize);
     }
 
     @Override
     public PageableDto<WaitListDto> getAllWaitLists(int currentPage, int pageSize) {
-        Pageable pageable = PageRequest.of(currentPage, pageSize);
-        Page<WaitList> allWaitListsPage = waitListRepository.findAll(pageable);
-        List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.toWaitListDtoList(allWaitListsPage.getContent());
+        Pageable pageable = createPageRequest(currentPage, pageSize);
+        Page<WaitList> waitListsPage = waitListRepository.findAll(pageable);
 
-        return new PageableDto<>(
-                waitListDto,
-                allWaitListsPage.getTotalPages(),
-                WaitListServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
-                currentPage,
-                allWaitListsPage.hasNext(),
-                allWaitListsPage.hasPrevious()
-        );
+        return createPageableResponse(waitListsPage, pageSize);
     }
 
     @Override
-    public boolean existsWaitListForBookId(UUID bookCopyId) {
-        return waitListRepository.existsByBook_Id(bookCopyId);
+    public boolean existsWaitListForBookId(UUID bookId) {
+        return waitListRepository.existsByBook_Id(bookId);
     }
 
     @Override
@@ -234,6 +188,88 @@ public class WaitListServiceImpl implements WaitListService {
 
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {
         return waitListRepository.findById(waitListId)
-                .orElseThrow(() -> new EntityNotFoundException("Wait list not found with ID: " + waitListId));
+            .orElseThrow(() -> new EntityNotFoundException("Wait list not found with ID: " + waitListId));
+    }
+
+    private PlaceHoldHandlerRequest createPlaceHoldValidationRequest(
+        User patron,
+        Book book,
+        UUID bookId,
+        List<BookCopy> availableCopies
+    ) {
+        return new PlaceHoldHandlerRequest(
+            patron,
+            book,
+            bookId,
+            Optional.empty(),
+            availableCopies
+        );
+    }
+
+    private void validateCancelHoldRequest(User patron, WaitList waitList, UUID waitListId) {
+        CancelHoldHandlerRequest validationRequest = new CancelHoldHandlerRequest(
+            patron,
+            waitList,
+            waitListId
+        );
+
+        cancelHoldValidationHandler.handle(validationRequest);
+    }
+
+    private void handleBookCopyReleaseIfReady(WaitList waitList) {
+        if (WaitListStatus.READY_FOR_PICKUP.equals(waitList.getStatus())) {
+            BookCopy reservedBookCopy = waitList.getReservedBookCopy();
+            if (reservedBookCopy != null) {
+                reservedBookCopy.setStatus(BookCopyStatus.AVAILABLE);
+                bookCopyService.saveBookCopy(reservedBookCopy);
+            }
+        }
+    }
+
+    private void updateWaitListForCancellation(WaitList waitList) {
+        waitList.setStatus(WaitListStatus.CANCELLED);
+        waitList.setEndDate(LocalDateTime.now());
+        waitListRepository.save(waitList);
+    }
+
+    private Set<UUID> extractFoundWaitListIds(List<WaitList> waitLists) {
+        return waitLists.stream()
+            .map(WaitList::getId)
+            .collect(Collectors.toSet());
+    }
+
+    private Set<UUID> findMissingWaitListIds(Set<UUID> allIds, Set<UUID> foundIds) {
+        return allIds.stream()
+            .filter(id -> !foundIds.contains(id))
+            .collect(Collectors.toSet());
+    }
+
+    private String formatMissingWaitListIds(Set<UUID> missingIds) {
+        return missingIds.stream()
+            .map(UUID::toString)
+            .collect(Collectors.joining(", "));
+    }
+
+    private void validatePatronStatus(User patron) {
+        if (patron.getPatronStatus() == null || !PatronStatus.ACTIVE.equals(patron.getPatronStatus())) {
+            throw new PatronStatusValidationException("Patron status is not active");
+        }
+    }
+
+    private Pageable createPageRequest(int currentPage, int pageSize) {
+        return PageRequest.of(currentPage, pageSize);
+    }
+
+    private PageableDto<WaitListDto> createPageableResponse(Page<WaitList> waitListsPage, int pageSize) {
+        List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.toWaitListDtoList(waitListsPage.getContent());
+
+        return new PageableDto<>(
+            waitListDto,
+            waitListsPage.getTotalPages(),
+            pageSize,
+            waitListsPage.getNumber(),
+            waitListsPage.hasNext(),
+            waitListsPage.hasPrevious()
+        );
     }
 }

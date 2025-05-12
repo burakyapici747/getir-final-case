@@ -1,4 +1,4 @@
-package com.burakyapici.library.service.validation.waitlist;
+package com.burakyapici.library.service.validation.waitlist.cancel;
 
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.model.WaitList;

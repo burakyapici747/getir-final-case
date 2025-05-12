@@ -1,7 +1,9 @@
-package com.burakyapici.library.service.validation.waitlist;
+package com.burakyapici.library.service.validation.waitlist.hold;
 
 import com.burakyapici.library.domain.enums.BookStatus;
 import com.burakyapici.library.exception.BookStatusValidationException;
+import com.burakyapici.library.service.validation.waitlist.AbstractWaitListValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.PlaceHoldHandlerRequest;
 import org.springframework.stereotype.Component;
 
 @Component

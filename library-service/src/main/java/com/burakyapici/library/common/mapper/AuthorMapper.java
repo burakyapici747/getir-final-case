@@ -15,12 +15,12 @@ import java.util.List;
 public interface AuthorMapper {
     AuthorMapper INSTANCE = Mappers.getMapper(AuthorMapper.class);
 
-    AuthorDto authorToAuthorDto(Author author);
-    List<AuthorDto> authorListToAuthorDtoList(List<Author> authors);
+    AuthorDto toAuthorDto(Author author);
+    List<AuthorDto> toAuthorDtoList(List<Author> authors);
 
-    AuthorResponse authorDtoToAuthorResponse(AuthorDto authorDto);
+    AuthorResponse toAuthorResponse(AuthorDto authorDto);
 
-    PageableResponse<AuthorResponse> pageableDtoToPageableResponse(PageableDto<AuthorDto> pageableResponse);
+    PageableResponse<AuthorResponse> toPageableResponse(PageableDto<AuthorDto> pageableResponse);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateAuthorFromAuthorUpdateRequest(AuthorUpdateRequest authorUpdateRequest, @MappingTarget Author author);

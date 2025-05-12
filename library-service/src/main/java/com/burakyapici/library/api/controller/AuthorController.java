@@ -4,20 +4,26 @@ import com.burakyapici.library.api.ApiResponse;
 import com.burakyapici.library.api.dto.request.AuthorCreateRequest;
 import com.burakyapici.library.api.dto.request.AuthorSearchCriteria;
 import com.burakyapici.library.api.dto.request.AuthorUpdateRequest;
+import com.burakyapici.library.api.dto.request.PageableParams;
 import com.burakyapici.library.api.dto.response.AuthorResponse;
 import com.burakyapici.library.api.dto.response.BookResponse;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.common.mapper.AuthorMapper;
 import com.burakyapici.library.common.mapper.BookMapper;
+import com.burakyapici.library.domain.dto.AuthorDto;
+import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.service.AuthorService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/authors")
 public class AuthorController {
     private final AuthorService authorService;
@@ -27,42 +33,38 @@ public class AuthorController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PageableResponse<AuthorResponse>>> getAllAuthors(
-        @RequestParam(value = "page", defaultValue = "0") int currentPage,
-        @RequestParam(value = "size", defaultValue = "10") int pageSize
-    ) {
-        PageableResponse<AuthorResponse> authors = AuthorMapper.INSTANCE.pageableDtoToPageableResponse(
-            authorService.getAllAuthors(currentPage, pageSize)
-        );
-        return ApiResponse.okResponse(authors, "Authors retrieved successfully");
+    public ResponseEntity<ApiResponse<PageableResponse<AuthorResponse>>> getAllAuthors(@Valid PageableParams params) {
+        PageableDto<AuthorDto> pageResult = authorService.getAllAuthors(params.page(), params.size());
+        PageableResponse<AuthorResponse> response = AuthorMapper.INSTANCE.toPageableResponse(pageResult);
+
+        return ApiResponse.okResponse(response, "Authors retrieved successfully");
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AuthorResponse>> getAuthorById(@PathVariable("id") UUID id) {
-        AuthorResponse author = AuthorMapper.INSTANCE.authorDtoToAuthorResponse(
-            authorService.getAuthorById(id)
-        );
+        AuthorResponse author = AuthorMapper.INSTANCE.toAuthorResponse(authorService.getAuthorById(id));
+
         return ApiResponse.okResponse(author, "Author retrieved successfully");
     }
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PageableResponse<AuthorResponse>>> searchAuthors(
         @ModelAttribute AuthorSearchCriteria authorSearchCriteria,
-        @RequestParam(value = "page", defaultValue = "0") int currentPage,
-        @RequestParam(value = "size", defaultValue = "10") int pageSize
+        @Valid PageableParams params
     ) {
-        PageableResponse<AuthorResponse> authors = AuthorMapper.INSTANCE.pageableDtoToPageableResponse(
-            authorService.searchAuthors(authorSearchCriteria, currentPage, pageSize)
-        );
-        return ApiResponse.okResponse(authors, "Authors retrieved successfully");
+        PageableDto<AuthorDto> pageResult = authorService.searchAuthors(authorSearchCriteria, params.page(), params.size());
+        PageableResponse<AuthorResponse> response = AuthorMapper.INSTANCE.toPageableResponse(pageResult);
+
+        return ApiResponse.okResponse(response, "Authors retrieved successfully");
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<AuthorResponse>> createAuthor(@RequestBody AuthorCreateRequest authorCreateRequest) {
-        AuthorResponse createdAuthor = AuthorMapper.INSTANCE.authorDtoToAuthorResponse(
+        AuthorResponse createdAuthor = AuthorMapper.INSTANCE.toAuthorResponse(
             authorService.createAuthor(authorCreateRequest)
         );
+
         return ApiResponse.createdResponse(createdAuthor, "Author created successfully", createdAuthor.id());
     }
 
@@ -84,7 +86,7 @@ public class AuthorController {
         @PathVariable("id") UUID id,
         @RequestBody AuthorUpdateRequest authorUpdateRequest
     ) {
-        AuthorResponse updatedAuthor = AuthorMapper.INSTANCE.authorDtoToAuthorResponse(
+        AuthorResponse updatedAuthor = AuthorMapper.INSTANCE.toAuthorResponse(
             authorService.updateAuthor(id, authorUpdateRequest)
         );
         return ApiResponse.okResponse(updatedAuthor, "Author updated successfully");

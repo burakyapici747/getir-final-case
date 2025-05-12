@@ -1,4 +1,4 @@
-package com.burakyapici.library.service.validation.waitlist;
+package com.burakyapici.library.service.validation.waitlist.cancel;
 
 public interface CancelHoldValidationHandler {
     void setNextHandler(CancelHoldValidationHandler nextHandler);

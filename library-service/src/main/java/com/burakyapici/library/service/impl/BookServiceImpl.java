@@ -32,7 +32,6 @@ import java.util.UUID;
 
 @Service
 public class BookServiceImpl implements BookService {
-    private static final int TOTAL_ELEMENTS_PER_PAGE = 10;
     private final BookRepository bookRepository;
     private final AuthorService authorService;
     private final GenreService genreService;
@@ -47,7 +46,8 @@ public class BookServiceImpl implements BookService {
         GenreService genreService,
         WaitListService waitListService,
         BookCopyService bookCopyService,
-        BorrowingService borrowingService) {
+        BorrowingService borrowingService
+    ) {
         this.waitListService = waitListService;
         this.bookRepository = bookRepository;
         this.authorService = authorService;
@@ -60,16 +60,8 @@ public class BookServiceImpl implements BookService {
     public PageableDto<BookDto> getAllBooks(int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(currentPage, pageSize);
         Page<Book> allBooksPage = bookRepository.findAll(pageable);
-        List<BookDto> bookDtoList = BookMapper.INSTANCE.toBookDtoList(allBooksPage.getContent());
 
-        return new PageableDto<>(
-            bookDtoList,
-            allBooksPage.getTotalPages(),
-            pageSize,
-            currentPage,
-            allBooksPage.hasNext(),
-            allBooksPage.hasPrevious()
-        );
+        return createPageableResponse(allBooksPage, pageSize);
     }
 
     @Override
@@ -98,7 +90,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookDto createBook(BookCreateRequest bookCreateRequest) {
-        validateBookForCreation(bookCreateRequest);
+        validateUniqueIsbn(bookCreateRequest.isbn());
 
         Set<Author> authors = authorService.getAuthorsByIdsOrElseThrow(bookCreateRequest.authorIds());
         Set<Genre> genres = genreService.getGenresByIdsOrElseThrow(bookCreateRequest.genreIds());
@@ -136,21 +128,10 @@ public class BookServiceImpl implements BookService {
     @Override
     public PageableDto<BookDto> searchBooks(BookSearchCriteria bookSearchCriteria, int currentPage, int pageSize) {
         Specification<Book> spec = BookSpecifications.findByCriteria(bookSearchCriteria);
-
         Pageable pageable = PageRequest.of(currentPage, pageSize);
-
         Page<Book> allBooksPage = bookRepository.findAll(spec, pageable);
 
-        List<BookDto> bookDtoList = BookMapper.INSTANCE.toBookDtoList(allBooksPage.getContent());
-
-        return new PageableDto<>(
-            bookDtoList,
-            allBooksPage.getTotalPages(),
-            allBooksPage.getSize(),
-            allBooksPage.getNumber(),
-            allBooksPage.hasNext(),
-            allBooksPage.hasPrevious()
-        );
+        return createPageableResponse(allBooksPage, pageSize);
     }
 
     @Override
@@ -184,8 +165,8 @@ public class BookServiceImpl implements BookService {
             .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + id));
     }
 
-    private void validateBookForCreation(BookCreateRequest bookCreateRequest) {
-        if(bookRepository.existsByIsbn(bookCreateRequest.isbn())) {
+    private void validateUniqueIsbn(String isbn) {
+        if(bookRepository.existsByIsbn(isbn)) {
             throw new DataConflictException("Book with the same ISBN already exists.");
         }
     }
@@ -194,5 +175,18 @@ public class BookServiceImpl implements BookService {
         if(!bookRepository.existsById(id)) {
             throw new EntityNotFoundException("Book not found with id: " + id);
         }
+    }
+
+    private PageableDto<BookDto> createPageableResponse(Page<Book> bookPage, int pageSize) {
+        List<BookDto> bookDtoList = BookMapper.INSTANCE.toBookDtoList(bookPage.getContent());
+
+        return new PageableDto<>(
+            bookDtoList,
+            bookPage.getTotalPages(),
+            pageSize,
+            bookPage.getNumber(),
+            bookPage.hasNext(),
+            bookPage.hasPrevious()
+        );
     }
 }
