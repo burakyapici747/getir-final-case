@@ -23,4 +23,5 @@ public interface WaitListService {
     Optional<WaitList> getByUserIdAndBookIdAndStatus(UUID userId, UUID bookId, WaitListStatus status);
     WaitList saveWaitList(WaitList waitList);
     void deleteByBookId(UUID bookId);
+    void deleteByBookCopyId(UUID bookCopyId);
 }

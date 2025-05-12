@@ -1,30 +1,29 @@
 package com.burakyapici.library.service.impl;
 
-import com.burakyapici.library.api.advice.DataConflictException;
 import com.burakyapici.library.api.advice.EntityNotFoundException;
-import com.burakyapici.library.api.advice.UnauthorizedResourceAccessException;
-import com.burakyapici.library.api.advice.UnprocessableEntityException;
 import com.burakyapici.library.api.dto.request.PlaceHoldRequest;
 import com.burakyapici.library.common.mapper.WaitListMapper;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.dto.WaitListDto;
-import com.burakyapici.library.domain.enums.BookStatus;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.enums.PatronStatus;
-import com.burakyapici.library.domain.enums.Role;
 import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.BookCopy;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.model.WaitList;
-import com.burakyapici.library.domain.repository.BookCopyRepository;
 import com.burakyapici.library.domain.repository.WaitListRepository;
-import com.burakyapici.library.exception.BookStatusValidationException;
 import com.burakyapici.library.exception.PatronStatusValidationException;
 import com.burakyapici.library.exception.WaitListNotFoundException;
+import com.burakyapici.library.service.BookCopyService;
 import com.burakyapici.library.service.BookService;
 import com.burakyapici.library.service.UserService;
 import com.burakyapici.library.service.WaitListService;
+import com.burakyapici.library.service.validation.waitlist.CancelHoldHandlerRequest;
+import com.burakyapici.library.service.validation.waitlist.CancelHoldValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.PlaceHoldHandlerRequest;
+import com.burakyapici.library.service.validation.waitlist.WaitListValidationHandler;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,52 +39,57 @@ public class WaitListServiceImpl implements WaitListService {
     private static final int TOTAL_ELEMENTS_PER_PAGE = 10;
     private final BookService bookService;
     private final UserService userService;
+    private final BookCopyService bookCopyService;
     private final WaitListRepository waitListRepository;
-    private final BookCopyRepository bookCopyRepository;
+    private final WaitListValidationHandler waitListValidationHandler;
+    private final CancelHoldValidationHandler cancelHoldValidationHandler;
 
     public WaitListServiceImpl(
         WaitListRepository waitListRepository,
         @Lazy
         BookService bookService,
         UserService userService,
-        BookCopyRepository bookCopyRepository
+        @Lazy
+        BookCopyService bookCopyService,
+        @Qualifier("waitListValidationChain")
+        WaitListValidationHandler waitListValidationHandler,
+        @Qualifier("cancelHoldValidationChain")
+        CancelHoldValidationHandler cancelHoldValidationHandler
     ) {
         this.waitListRepository = waitListRepository;
         this.bookService = bookService;
         this.userService = userService;
-        this.bookCopyRepository = bookCopyRepository;
+        this.bookCopyService = bookCopyService;
+        this.waitListValidationHandler = waitListValidationHandler;
+        this.cancelHoldValidationHandler = cancelHoldValidationHandler;
     }
 
     @Override
     public WaitListDto placeHold(PlaceHoldRequest placeHoldRequest, UUID patronId) {
         User patron = userService.getUserByIdOrElseThrow(patronId);
-        if(!PatronStatus.ACTIVE.equals(patron.getPatronStatus())) {
-            throw new PatronStatusValidationException(patron.getPatronStatus().getDescription());
-        }
-
         Book book = bookService.getBookByIdOrElseThrow(placeHoldRequest.bookId());
-        if(!BookStatus.ACTIVE.equals(book.getBookStatus())){
-            throw new BookStatusValidationException(book.getBookStatus().getDescription());
-        }
 
-        waitListRepository.findWaitListByBookIdAndWaitListStatusIn(
+        List<BookCopy> availableCopies = bookCopyService.findByBookIdAndStatus(
+            book.getId(),
+            BookCopyStatus.AVAILABLE
+        );
+
+        PlaceHoldHandlerRequest validationRequest = new PlaceHoldHandlerRequest(
+            patron,
+            book,
             placeHoldRequest.bookId(),
-            Set.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
-        ).ifPresent(waitList -> {
-            throw new DataConflictException("There is already a wait list for this book.");
-        });
+            Optional.empty(),
+            availableCopies
+        );
+        
+        waitListValidationHandler.handle(validationRequest);
 
-        //TODO: Wait List LIMIT kontrolu yapilacak.
-        //TODO: Book availability (müsait kopya var mı) kontrolünü ekleyin (BookCopyService kullanarak) eger musait yoksa .
-        //TODO: Patron'un herhangi bir cezasi var mi kontrolu
-
-        WaitList waitList = WaitList.builder()
-            .startDate(LocalDateTime.now())
-            .status(WaitListStatus.WAITING)
-            .build();
+        WaitList waitList = new WaitList();
+        waitList.setUser(patron);
+        waitList.setStartDate(LocalDateTime.now());
+        waitList.setStatus(WaitListStatus.WAITING);
 
         waitListRepository.save(waitList);
-        bookService.saveBook(book);
 
         return WaitListMapper.INSTANCE.waitListToWaitListDto(waitList);
     }
@@ -95,19 +99,24 @@ public class WaitListServiceImpl implements WaitListService {
         WaitList waitList = findWaitListByIdOrElseThrow(waitListId);
         User patron = userService.getUserByIdOrElseThrow(patronId);
 
-        if( !patron.getId().equals(waitList.getUser().getId()) && Role.PATRON.equals(patron.getRole()) ){
-            throw new UnauthorizedResourceAccessException("You cannot cancel a wait list that does not belong to you.");
-        }
+        CancelHoldHandlerRequest validationRequest = new CancelHoldHandlerRequest(
+            patron,
+            waitList,
+            waitListId
+        );
+        
+        cancelHoldValidationHandler.handle(validationRequest);
 
-        if( !(WaitListStatus.WAITING.equals(waitList.getStatus()) || WaitListStatus.READY_FOR_PICKUP.equals(waitList.getStatus())) ){
-            throw new UnprocessableEntityException("You can only cancel a wait list that is in WAITING or READY_FOR_PICKUP status.");
+        if (WaitListStatus.READY_FOR_PICKUP.equals(waitList.getStatus())) {
+            BookCopy reservedBookCopy = waitList.getReservedBookCopy();
+            if (reservedBookCopy != null) {
+                reservedBookCopy.setStatus(BookCopyStatus.AVAILABLE);
+                bookCopyService.saveBookCopy(reservedBookCopy);
+            }
         }
-
-        //TODO: Eğer iptal edilen bekleme kaydının önceki durumu READY_FOR_PICKUP ise, ilgili BookCopy'yi serbest
-        // bırakma (ON_HOLD'dan çıkarma, status güncelleme, reservedForWaitList=null yapma) mantığını ekleyin
-        // (BookCopyService kullanarak).
 
         waitList.setStatus(WaitListStatus.CANCELLED);
+        waitList.setEndDate(LocalDateTime.now());
 
         waitListRepository.save(waitList);
     }
@@ -117,9 +126,10 @@ public class WaitListServiceImpl implements WaitListService {
         List<WaitList> waitLists = waitListRepository.findAllById(waitListIds);
 
         if (waitLists.size() != waitListIds.size()) {
-            Set<UUID> foundWaitListIds = waitLists.stream()
-                .map(WaitList::getId)
-                .collect(Collectors.toSet());
+            Set<UUID> foundWaitListIds = new HashSet<>();
+            for (WaitList waitList : waitLists) {
+                foundWaitListIds.add(waitList.getId());
+            }
 
             Set<UUID> missingWaitListIds = waitListIds.stream()
                 .filter(id -> !foundWaitListIds.contains(id))
@@ -140,8 +150,8 @@ public class WaitListServiceImpl implements WaitListService {
     public List<WaitListDto> getWaitListsByPatronId(UUID patronId) {
         User patron = userService.getUserByIdOrElseThrow(patronId);
 
-        if(!PatronStatus.ACTIVE.equals(patron.getPatronStatus())) {
-            throw new PatronStatusValidationException(patron.getPatronStatus().getDescription());
+        if(patron.getPatronStatus() == null || !PatronStatus.ACTIVE.equals(patron.getPatronStatus())) {
+            throw new PatronStatusValidationException("Patron status is not active");
         }
 
         List<WaitList> waitLists = waitListRepository.findByUser_IdAndStatusIn(
@@ -210,30 +220,9 @@ public class WaitListServiceImpl implements WaitListService {
         waitListRepository.deleteByBookId(bookId);
     }
 
-    private void processWaitListQueueForBook(UUID bookId) {
-        List<WaitList> waitingList = waitListRepository.findByBookIdAndStatusOrderByStartDateAsc(
-            bookId, WaitListStatus.WAITING.name());
-        
-        if(waitingList.isEmpty()) {
-            return;
-        }
-        
-        List<BookCopy> availableCopies = bookCopyRepository.findByBookIdAndStatus(
-            bookId, BookCopyStatus.AVAILABLE);
-        
-        if(availableCopies.isEmpty()) {
-            return;
-        }
-        
-        WaitList nextWaitList = waitingList.getFirst();
-        BookCopy bookCopy = availableCopies.getFirst();
-        
-        nextWaitList.setReservedBookCopy(bookCopy);
-        nextWaitList.setStatus(WaitListStatus.READY_FOR_PICKUP);
-        waitListRepository.save(nextWaitList);
-        
-        bookCopy.setStatus(BookCopyStatus.ON_HOLD);
-        bookCopyRepository.save(bookCopy);
+    @Override
+    public void deleteByBookCopyId(UUID bookCopyId) {
+        waitListRepository.deleteByBookCopyId(bookCopyId);
     }
 
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {

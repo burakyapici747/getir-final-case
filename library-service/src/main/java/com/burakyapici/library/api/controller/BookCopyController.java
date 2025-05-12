@@ -9,7 +9,6 @@ import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.common.mapper.BookCopyMapper;
 import com.burakyapici.library.service.BookCopyService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -35,7 +34,7 @@ public class BookCopyController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookCopyResponse>> getBookCopyById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<BookCopyResponse>> getBookCopyById(@PathVariable("id") UUID id) {
         BookCopyResponse bookCopy = BookCopyMapper.INSTANCE.bookCopyDtoToBookCopyResponse(
             bookCopyService.getBookCopyById(id)
         );
@@ -55,7 +54,6 @@ public class BookCopyController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookCopyResponse>> createBookCopy(@RequestBody BookCopyCreateRequest bookCopyCreateRequest) {
         BookCopyResponse createdBookCopy = BookCopyMapper.INSTANCE.bookCopyDtoToBookCopyResponse(
             bookCopyService.createBookCopy(bookCopyCreateRequest)
@@ -64,9 +62,8 @@ public class BookCopyController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookCopyResponse>> updateBookCopy(
-        @PathVariable UUID id,
+        @PathVariable("id") UUID id,
         @RequestBody BookCopyUpdateRequest bookCopyUpdateRequest
     ) {
         BookCopyResponse updatedBookCopy = BookCopyMapper.INSTANCE.bookCopyDtoToBookCopyResponse(
@@ -76,8 +73,7 @@ public class BookCopyController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<ApiResponse<Void>> deleteBookCopyById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> deleteBookCopyById(@PathVariable("id") UUID id) {
         bookCopyService.deleteBookCopyById(id);
         return ApiResponse.noContentResponse("Book copy deleted successfully");
     }

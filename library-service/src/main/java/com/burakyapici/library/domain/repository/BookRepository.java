@@ -43,14 +43,13 @@ public interface BookRepository extends JpaRepository<Book, UUID>, JpaSpecificat
 
     @Query(value =
         """
-            SELECT CASE WHEN count(b)>0 THEN TRUE ELSE FALSE END
+            SELECT CASE WHEN count(b) > 0 THEN TRUE ELSE FALSE END
             FROM Book b
-            WHERE b.isbn = :isbn or b.title = :title
+            WHERE b.isbn = :isbn
         """
     )
-    boolean existsByIsbnOrTitle(
-        @Param("isbn") String isbn,
-        @Param("title") String title
+    boolean existsByIsbn(
+        @Param("isbn") String isbn
     );
 
     boolean existsById(UUID id);

@@ -41,14 +41,19 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
     Page<WaitList> findByBookId(@Param("bookId") UUID bookId, Pageable pageable);
 
     @Query(value =
-        """
-            SELECT * FROM wait_list wl
-            WHERE wl.book_id = :bookId
-            AND wl.status IN (:waitListStatuses)
-        """,
-        nativeQuery = true
+            """
+                SELECT * FROM wait_list wl
+                WHERE wl.book_id = :bookId
+                AND wl.user_id = :userId
+                AND wl.status IN (:waitListStatuses)
+            """,
+            nativeQuery = true
     )
-    Optional<WaitList> findWaitListByBookIdAndWaitListStatusIn(UUID bookId, Set<WaitListStatus> waitListStatuses);
+    Optional<WaitList> findWaitListByBookIdAndUserIdAndWaitListStatusIn(
+            @Param("bookId") UUID bookId,
+            @Param("userId") UUID userId,
+            @Param("waitListStatuses") Set<WaitListStatus> waitListStatuses
+    );
 
     @Query(
             value = """
@@ -107,7 +112,6 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
 
     List<WaitList> findByStatusAndStartDateBefore(WaitListStatus status, LocalDateTime date);
 
-
     @Query(
             value = """
         SELECT * FROM wait_list 
@@ -121,4 +125,15 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
         @Param("bookId") UUID bookId,
         @Param("status") String status
     );
+
+    @Query(
+            value =
+        """
+            DELETE FROM wait_list wl
+            WHERE wl.book_copy_id = :bookCopyId
+        """,
+        nativeQuery = true
+    )
+    @Modifying
+    void deleteByBookCopyId(@Param("bookCopyId") UUID bookCopyId);
 }

@@ -3,10 +3,10 @@ package com.burakyapici.library.service;
 import com.burakyapici.library.api.dto.request.BorrowBookCopyRequest;
 import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
 import com.burakyapici.library.domain.dto.BorrowDto;
+import com.burakyapici.library.domain.model.Borrowing;
 import com.burakyapici.library.security.UserDetailsImpl;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public interface BorrowingService {
     BorrowDto borrowBookCopyByBarcode(
@@ -20,6 +20,8 @@ public interface BorrowingService {
         BorrowReturnRequest borrowReturnRequest,
         UserDetailsImpl userDetails
     );
-    
-    CompletableFuture<Void> deleteAllByBookId(UUID bookId);
+
+    void deleteAllByBookCopyId(UUID bookCopyId);
+
+    void deleteAllByBookId(UUID bookId);
 }

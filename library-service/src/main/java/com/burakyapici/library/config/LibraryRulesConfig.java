@@ -27,7 +27,6 @@ public class LibraryRulesConfig {
     private double blockThresholdAmount = 30.0;
     private int inactivityMonths = 12;
 
-    // Batch işlem kuralları
     private int overdueCheckHour = 1;
     private int waitListProcessingHour = 2;
     private int inactiveUserCheckDay = 1;

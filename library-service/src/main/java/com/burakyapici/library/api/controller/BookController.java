@@ -12,17 +12,20 @@ import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.common.mapper.BookCopyMapper;
 import com.burakyapici.library.common.mapper.BookMapper;
 import com.burakyapici.library.service.BookService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/books")
 public class BookController {
@@ -42,8 +45,10 @@ public class BookController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageableResponse<BookResponse>>> getAllBooks(
+        @Valid
         @Min(value = 0)
         @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
+        @Valid
         @Min(value = 1)
         @Max(value = 50)
         @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
@@ -98,15 +103,15 @@ public class BookController {
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<ApiResponse<BookResponse>> createBook(@RequestBody BookCreateRequest bookCreateRequest) {
+    public ResponseEntity<ApiResponse<BookResponse>> createBook(@Valid @RequestBody BookCreateRequest bookCreateRequest) {
         BookResponse createdBook = BookMapper.INSTANCE.bookDtoToBookResponse(
             bookService.createBook(bookCreateRequest)
         );
+
         return ApiResponse.createdResponse(createdBook, "Book created successfully.", createdBook.id());
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookResponse>> updateBook(
         @PathVariable("id") UUID id,
         @RequestBody BookUpdateRequest bookUpdateRequest
@@ -118,7 +123,6 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable("id") UUID id) {
         bookService.deleteBookById(id);
         return ApiResponse.noContentResponse("Book deleted successfully.");

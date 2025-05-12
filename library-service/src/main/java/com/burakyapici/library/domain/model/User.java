@@ -78,6 +78,14 @@ public class User extends BaseModel {
         return role == Role.LIBRARIAN;
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public PatronStatus getPatronStatus() {
+        return patronStatus;
+    }
+
     @Override
     public UUID getId() {
         return super.getId();

@@ -26,7 +26,6 @@ public record BookCreateRequest(
     int page,
 
     @NotNull(message = "Publication date cannot be null")
-    @PastOrPresent(message = "Publication date cannot be in the future")
     LocalDate publicationDate,
 
     @NotEmpty(message = "At least one author must be specified")

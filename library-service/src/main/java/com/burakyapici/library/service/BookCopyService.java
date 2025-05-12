@@ -8,6 +8,7 @@ import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.model.BookCopy;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface BookCopyService {
@@ -23,4 +24,5 @@ public interface BookCopyService {
     BookCopy saveBookCopy(BookCopy bookCopy);
     PageableDto<BookCopyDto> searchBookCopies(BookCopySearchCriteria bookCopySearchCriteria, int currentPage, int pageSize);
     void deleteAllByBookId(UUID bookId);
+    List<BookCopy> findByBookIdAndStatus(UUID bookId, BookCopyStatus status);
 }

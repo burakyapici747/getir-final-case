@@ -14,6 +14,11 @@ public record BookCopyCreateRequest(
     @NotNull(message = "Book ID cannot be null")
     UUID bookId,
 
-    @NotNull(message = "Book copy status cannot be null")
     BookCopyStatus bookCopyStatus
-) {}
+) {
+    public BookCopyCreateRequest(String barcode, UUID bookId, BookCopyStatus bookCopyStatus) {
+        this.barcode = barcode;
+        this.bookId = bookId;
+        this.bookCopyStatus = bookCopyStatus != null ? bookCopyStatus : BookCopyStatus.AVAILABLE;
+    }
+}

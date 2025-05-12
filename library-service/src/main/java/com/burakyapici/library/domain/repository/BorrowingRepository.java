@@ -53,4 +53,6 @@ public interface BorrowingRepository extends JpaRepository<Borrowing, UUID> {
         """, 
         nativeQuery = true)
     int countActiveByUserIdAndBookId(@Param("userId") UUID userId, @Param("bookId") UUID bookId);
+
+    void deleteAllByBookCopyId(UUID bookCopyId);
 }

@@ -92,6 +92,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public PageableDto<BookCopyDto> getBookCopiesById(UUID id, int currentPage, int pageSize) {
+        validateBookExistsById(id);
         return bookCopyService.getAllBookCopiesByBookId(id, currentPage, pageSize);
     }
 
@@ -159,6 +160,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public int calculateAvailableCopiesCount(UUID bookId) {
+        validateBookExistsById(bookId);
         return bookCopyService.countByIdAndStatus(bookId, BookCopyStatus.AVAILABLE);
     }
 
@@ -183,8 +185,8 @@ public class BookServiceImpl implements BookService {
     }
 
     private void validateBookForCreation(BookCreateRequest bookCreateRequest) {
-        if(bookRepository.existsByIsbnOrTitle(bookCreateRequest.isbn(), bookCreateRequest.title())) {
-            throw new DataConflictException("Book with the same ISBN or title already exists.");
+        if(bookRepository.existsByIsbn(bookCreateRequest.isbn())) {
+            throw new DataConflictException("Book with the same ISBN already exists.");
         }
     }
 

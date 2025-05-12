@@ -20,7 +20,6 @@ import com.burakyapici.library.service.validation.borrowing.BorrowValidationHand
 import com.burakyapici.library.service.validation.returning.ReturnHandlerRequest;
 import com.burakyapici.library.service.validation.returning.ReturnValidationHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Sinks;
@@ -28,7 +27,6 @@ import reactor.core.publisher.Sinks;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class BorrowingServiceImpl implements BorrowingService {
@@ -125,12 +123,14 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    @Async
+    public void deleteAllByBookCopyId(UUID bookCopyId) {
+        borrowingRepository.deleteAllByBookCopyId(bookCopyId);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public CompletableFuture<Void> deleteAllByBookId(UUID bookId) {
-        return CompletableFuture.runAsync(() -> {
-            borrowingRepository.deleteAllByBookCopyBookId(bookId);
-        });
+    public void deleteAllByBookId(UUID bookId) {
+        borrowingRepository.deleteAllByBookCopyBookId(bookId);
     }
 
     private Optional<WaitList> findReadyForPickupWaitListEntry(User patron, Book book) {

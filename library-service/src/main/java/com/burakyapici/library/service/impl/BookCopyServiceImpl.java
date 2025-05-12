@@ -16,12 +16,15 @@ import com.burakyapici.library.domain.repository.BookCopyRepository;
 import com.burakyapici.library.domain.specification.BookCopySpecifications;
 import com.burakyapici.library.service.BookCopyService;
 import com.burakyapici.library.service.BookService;
+import com.burakyapici.library.service.BorrowingService;
+import com.burakyapici.library.service.WaitListService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
@@ -33,15 +36,22 @@ public class BookCopyServiceImpl implements BookCopyService {
     private final BookCopyRepository bookCopyRepository;
     private final BookService bookService;
     private final Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink;
+    private final BorrowingService borrowingService;
+    private final WaitListService waitListService;
 
     public BookCopyServiceImpl(
-            BookCopyRepository bookCopyRepository,
-            @Lazy
-        BookService bookService, Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink
+        BookCopyRepository bookCopyRepository,
+        @Lazy
+        BookService bookService,
+        Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink,
+        @Lazy
+        BorrowingService borrowingService, WaitListService waitListService
     ) {
         this.bookCopyRepository = bookCopyRepository;
         this.bookService = bookService;
         this.bookAvailabilitySink = bookAvailabilitySink;
+        this.borrowingService = borrowingService;
+        this.waitListService = waitListService;
     }
 
     @Override
@@ -50,8 +60,11 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    @Transactional
     public void deleteBookCopyById(UUID id) {
         BookCopy bookCopy = findByIdOrElseThrow(id);
+        waitListService.deleteByBookCopyId(id);
+        borrowingService.deleteAllByBookCopyId(id);
         bookCopyRepository.delete(bookCopy);
     }
 
@@ -93,6 +106,11 @@ public class BookCopyServiceImpl implements BookCopyService {
     @Override
     public void deleteAllByBookId(UUID bookId) {
         bookCopyRepository.deleteByBookId(bookId);
+    }
+
+    @Override
+    public List<BookCopy> findByBookIdAndStatus(UUID bookId, BookCopyStatus status) {
+        return bookCopyRepository.findByBookIdAndStatus(bookId, status);
     }
 
     @Override

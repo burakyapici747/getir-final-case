@@ -26,6 +26,7 @@ public interface BookCopyMapper {
     @Mapping(target = "book", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "barcode", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateBookCopyFromBookCopyUpdateRequest(BookCopyUpdateRequest bookCopyUpdateRequest, @MappingTarget BookCopy bookCopy);
 }

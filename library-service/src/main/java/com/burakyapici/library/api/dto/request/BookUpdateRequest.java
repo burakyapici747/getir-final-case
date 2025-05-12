@@ -17,7 +17,6 @@ public record BookUpdateRequest(
     @Max(value = 10000, message = "Page count cannot exceed 10000")
     int page,
 
-    @PastOrPresent(message = "Publication date cannot be in the future")
     LocalDate publicationDate,
 
     Set<@NotNull(message = "Author ID cannot be null") UUID> authorIds,
