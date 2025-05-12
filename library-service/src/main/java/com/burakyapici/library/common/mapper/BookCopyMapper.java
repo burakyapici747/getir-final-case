@@ -15,13 +15,13 @@ import java.util.List;
 public interface BookCopyMapper {
     BookCopyMapper INSTANCE = Mappers.getMapper(BookCopyMapper.class);
 
-    BookCopyDto bookCopyToBookCopyDto(BookCopy bookCopy);
+    BookCopyDto toBookCopyDto(BookCopy bookCopy);
 
-    List<BookCopyDto> bookCopyListToBookCopyDtoList(List<BookCopy> bookCopyList);
+    List<BookCopyDto> toBookCopyDtoList(List<BookCopy> bookCopyList);
 
-    PageableResponse<BookCopyResponse> bookCopyPageableDtoListToPageableResponse(PageableDto<BookCopyDto> pageableDto);
+    PageableResponse<BookCopyResponse> toPageableResponse(PageableDto<BookCopyDto> pageableDto);
 
-    BookCopyResponse bookCopyDtoToBookCopyResponse(BookCopyDto bookCopyDto);
+    BookCopyResponse toBookCopyResponse(BookCopyDto bookCopyDto);
 
     @Mapping(target = "book", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

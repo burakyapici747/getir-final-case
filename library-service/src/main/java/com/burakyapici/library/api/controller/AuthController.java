@@ -23,31 +23,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
-        @Valid
-        @RequestBody
-        LoginRequest loginRequest
-    ){
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         LoginResponse loginResponse = authService.login(loginRequest);
         return ApiResponse.okResponse(loginResponse, "Login successful");
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<RegisterResponse>> register(
-        @Valid
-        @RequestBody
-        RegisterRequest registerRequest
-    ){
+    public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         RegisterResponse registerResponse = authService.register(registerRequest);
         return ApiResponse.createdResponse(registerResponse, "Registration successful", registerResponse.id());
     }
 }
-
-    //TODO: forgot-password
-    //TODO: reset-password
-    //TODO: verify-email
-    //TODO: resend-verification-email
-    //TODO: /lock-account/{userId}
-    //TODO: /unlock-account/{userId}
-    //TODO: /refresh-token
-    //TODO: /logout

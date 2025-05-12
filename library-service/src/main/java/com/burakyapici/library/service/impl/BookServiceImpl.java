@@ -60,7 +60,7 @@ public class BookServiceImpl implements BookService {
     public PageableDto<BookDto> getAllBooks(int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(currentPage, pageSize);
         Page<Book> allBooksPage = bookRepository.findAll(pageable);
-        List<BookDto> bookDtoList = BookMapper.INSTANCE.bookListToBookDtoList(allBooksPage.getContent());
+        List<BookDto> bookDtoList = BookMapper.INSTANCE.toBookDtoList(allBooksPage.getContent());
 
         return new PageableDto<>(
             bookDtoList,
@@ -74,7 +74,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public List<BookDto> getAllBooksByAuthorId(UUID authorId) {
-        return BookMapper.INSTANCE.bookListToBookDtoList(
+        return BookMapper.INSTANCE.toBookDtoList(
             bookRepository.findAllByAuthors_Id(authorId)
         );
     }
@@ -82,7 +82,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public BookDetailDto getBookDetailById(UUID id) {
         Book book = getBookByIdOrElseThrow(id);
-        return BookMapper.INSTANCE.bookToBookDetailDto(book);
+        return BookMapper.INSTANCE.toBookDetailDto(book);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class BookServiceImpl implements BookService {
 
         bookRepository.save(book);
 
-        return BookMapper.INSTANCE.bookToBookDto(book);
+        return BookMapper.INSTANCE.toBookDto(book);
     }
 
     @Override
@@ -130,7 +130,7 @@ public class BookServiceImpl implements BookService {
             waitListService
         );
 
-        return BookMapper.INSTANCE.bookToBookDto(bookRepository.save(book));
+        return BookMapper.INSTANCE.toBookDto(bookRepository.save(book));
     }
 
     @Override
@@ -141,7 +141,7 @@ public class BookServiceImpl implements BookService {
 
         Page<Book> allBooksPage = bookRepository.findAll(spec, pageable);
 
-        List<BookDto> bookDtoList = BookMapper.INSTANCE.bookListToBookDtoList(allBooksPage.getContent());
+        List<BookDto> bookDtoList = BookMapper.INSTANCE.toBookDtoList(allBooksPage.getContent());
 
         return new PageableDto<>(
             bookDtoList,
@@ -171,7 +171,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     @Transactional
-    public void deleteBookById(UUID id) {
+    public void deleteById(UUID id) {
         validateBookExistsById(id);
         waitListService.deleteByBookId(id);
         borrowingService.deleteAllByBookId(id);

@@ -28,20 +28,20 @@ import java.util.stream.Stream;
 public interface BookMapper {
     BookMapper INSTANCE = Mappers.getMapper(BookMapper.class);
 
-    BookDto bookToBookDto(Book book);
+    BookDto toBookDto(Book book);
 
-    List<BookDto> bookListToBookDtoList(List<Book> books);
+    List<BookDto> toBookDtoList(List<Book> books);
 
-    List<BookResponse> bookDtoListToBookResponseList(List<BookDto> bookDtoList);
+    List<BookResponse> toResponse(List<BookDto> bookDtoList);
 
     @Mapping(target = "availableCopies", expression = "java(getBookCopiesCount(book.getBookCopies()))")
-    BookDetailDto bookToBookDetailDto(Book book);
+    BookDetailDto toBookDetailDto(Book book);
 
-    BookResponse bookDtoToBookResponse(BookDto bookDto);
+    BookResponse toResponse(BookDto bookDto);
 
-    BookDetailResponse bookDetailDtoToBookDetailResponse(BookDetailDto bookDetailDto);
+    BookDetailResponse toDetailResponse(BookDetailDto bookDetailDto);
 
-    PageableResponse<BookResponse> bookPageableDtoListToPageableResponse(PageableDto<BookDto> pageableDto);
+    PageableResponse<BookResponse> toPageableResponse(PageableDto<BookDto> pageableDto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "bookCopies", ignore = true)

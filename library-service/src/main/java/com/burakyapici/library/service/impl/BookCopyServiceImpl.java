@@ -10,8 +10,10 @@ import com.burakyapici.library.common.mapper.BookCopyMapper;
 import com.burakyapici.library.domain.dto.BookCopyDto;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
+import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.BookCopy;
+import com.burakyapici.library.domain.model.WaitList;
 import com.burakyapici.library.domain.repository.BookCopyRepository;
 import com.burakyapici.library.domain.specification.BookCopySpecifications;
 import com.burakyapici.library.service.BookCopyService;
@@ -27,7 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Sinks;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -56,7 +60,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     public BookCopyDto getBookCopyById(UUID id) {
-        return BookCopyMapper.INSTANCE.bookCopyToBookCopyDto(findByIdOrElseThrow(id));
+        return BookCopyMapper.INSTANCE.toBookCopyDto(findByIdOrElseThrow(id));
     }
 
     @Override
@@ -91,7 +95,7 @@ public class BookCopyServiceImpl implements BookCopyService {
         Page<BookCopy> allBookCopiesPage = bookCopyRepository.findAll(spec, pageable);
 
         List<BookCopyDto> bookCopyDtoList =
-                BookCopyMapper.INSTANCE.bookCopyListToBookCopyDtoList(allBookCopiesPage.getContent());
+                BookCopyMapper.INSTANCE.toBookCopyDtoList(allBookCopiesPage.getContent());
 
         return new PageableDto<>(
             bookCopyDtoList,
@@ -127,7 +131,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     public PageableDto<BookCopyDto> getAllBookCopies(int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(currentPage, pageSize);
         Page<BookCopy> bookCopies = bookCopyRepository.findAll(pageable);
-        List<BookCopyDto> bookCopyDtoList = BookCopyMapper.INSTANCE.bookCopyListToBookCopyDtoList(bookCopies.getContent());
+        List<BookCopyDto> bookCopyDtoList = BookCopyMapper.INSTANCE.toBookCopyDtoList(bookCopies.getContent());
 
         return new PageableDto<>(
             bookCopyDtoList,
@@ -143,7 +147,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     public PageableDto<BookCopyDto> getAllBookCopiesByBookId(UUID bookId, int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(0, 10);
         Page<BookCopy> bookCopies = bookCopyRepository.findAllByBookId(bookId, pageable);
-        List<BookCopyDto> bookCopyDtoList = BookCopyMapper.INSTANCE.bookCopyListToBookCopyDtoList(bookCopies.getContent());
+        List<BookCopyDto> bookCopyDtoList = BookCopyMapper.INSTANCE.toBookCopyDtoList(bookCopies.getContent());
 
         return new PageableDto<>(
             bookCopyDtoList,
@@ -171,7 +175,21 @@ public class BookCopyServiceImpl implements BookCopyService {
 
         bookAvailabilitySink.emitNext(event, Sinks.EmitFailureHandler.FAIL_FAST);
 
-        return BookCopyMapper.INSTANCE.bookCopyToBookCopyDto(bookCopyRepository.save(bookCopy));
+        Optional<WaitList> waitListSuitableOptional =
+                waitListService.getTopByBookIdAndStatusOrderByStartDateAsc(book.getId(), WaitListStatus.WAITING);
+
+        waitListSuitableOptional.ifPresent(waitList -> {
+            LocalDateTime now = LocalDateTime.now();
+
+            waitList.setStatus(WaitListStatus.READY_FOR_PICKUP);
+            waitList.setStartDate(now);
+            waitList.setEndDate(now.plusDays(3));
+            waitList.setReservedBookCopy(bookCopy);
+
+            bookCopy.setStatus(BookCopyStatus.ON_HOLD);
+        });
+
+        return BookCopyMapper.INSTANCE.toBookCopyDto(bookCopyRepository.save(bookCopy));
     }
 
     @Override
@@ -179,7 +197,7 @@ public class BookCopyServiceImpl implements BookCopyService {
         BookCopy bookCopy = findByIdOrElseThrow(id);
         BookCopyMapper.INSTANCE.updateBookCopyFromBookCopyUpdateRequest(bookCopyUpdateRequest, bookCopy);
 
-        return BookCopyMapper.INSTANCE.bookCopyToBookCopyDto(bookCopyRepository.save(bookCopy));
+        return BookCopyMapper.INSTANCE.toBookCopyDto(bookCopyRepository.save(bookCopy));
     }
 
     private BookCopy findByIdOrElseThrow(UUID id) {

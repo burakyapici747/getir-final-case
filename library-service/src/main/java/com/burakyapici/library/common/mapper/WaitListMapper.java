@@ -14,13 +14,13 @@ import java.util.List;
 public interface WaitListMapper {
     WaitListMapper INSTANCE = Mappers.getMapper(WaitListMapper.class);
 
-    WaitListDto waitListToWaitListDto(WaitList waitList);
+    WaitListDto toWaitListDtoList(WaitList waitList);
 
-    List<WaitListDto> waitListToWaitListDto(List<WaitList> waitLists);
+    List<WaitListDto> toWaitListDtoList(List<WaitList> waitLists);
 
-    WaitListResponse waitListDtoToWaitListResponse(WaitListDto waitListDto);
+    WaitListResponse toWaitListResponse(WaitListDto waitListDto);
 
-    PageableResponse<WaitListResponse> pageableDtoToPageableResponse(PageableDto<WaitListDto> pageableDto);
+    PageableResponse<WaitListResponse> toPageableResponse(PageableDto<WaitListDto> pageableDto);
 
-    List<WaitListResponse> waitListDtoToWaitListResponse(List<WaitListDto> waitListDtoList);
+    List<WaitListResponse> toWaitListResponse(List<WaitListDto> waitListDtoList);
 }

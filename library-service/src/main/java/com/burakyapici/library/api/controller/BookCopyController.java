@@ -4,16 +4,24 @@ import com.burakyapici.library.api.ApiResponse;
 import com.burakyapici.library.api.dto.request.BookCopyCreateRequest;
 import com.burakyapici.library.api.dto.request.BookCopySearchCriteria;
 import com.burakyapici.library.api.dto.request.BookCopyUpdateRequest;
+import com.burakyapici.library.api.dto.request.PageableParams;
 import com.burakyapici.library.api.dto.response.BookCopyResponse;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.common.mapper.BookCopyMapper;
+import com.burakyapici.library.domain.dto.BookCopyDto;
+import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.service.BookCopyService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/book-copies")
 public class BookCopyController {
     private final BookCopyService bookCopyService;
@@ -23,53 +31,52 @@ public class BookCopyController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PageableResponse<BookCopyResponse>>> getAllBookCopies(
-        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
-        @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
-    ) {
-        PageableResponse<BookCopyResponse> bookCopies = BookCopyMapper.INSTANCE.bookCopyPageableDtoListToPageableResponse(
-            bookCopyService.getAllBookCopies(currentPage, pageSize)
-        );
-        return ApiResponse.okResponse(bookCopies, "Book copies retrieved successfully");
+    public ResponseEntity<ApiResponse<PageableResponse<BookCopyResponse>>> getAllBookCopies(@Valid PageableParams params) {
+        PageableDto<BookCopyDto> pageResult = bookCopyService.getAllBookCopies(params.page(), params.size());
+        PageableResponse<BookCopyResponse> response = BookCopyMapper.INSTANCE.toPageableResponse(pageResult);
+
+        return ApiResponse.okResponse(response, "Book copies retrieved successfully");
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BookCopyResponse>> getBookCopyById(@PathVariable("id") UUID id) {
-        BookCopyResponse bookCopy = BookCopyMapper.INSTANCE.bookCopyDtoToBookCopyResponse(
-            bookCopyService.getBookCopyById(id)
-        );
-        return ApiResponse.okResponse(bookCopy, "Book copy retrieved successfully");
+        BookCopyDto dto = bookCopyService.getBookCopyById(id);
+        BookCopyResponse response = BookCopyMapper.INSTANCE.toBookCopyResponse(dto);
+
+        return ApiResponse.okResponse(response, "Book copy retrieved successfully");
     }
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PageableResponse<BookCopyResponse>>> searchBookCopies(
-        @ModelAttribute BookCopySearchCriteria bookCopySearchCriteria,
-        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
-        @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
+        @Valid @ModelAttribute BookCopySearchCriteria bookCopySearchCriteria,
+        @Valid PageableParams params
     ) {
-        PageableResponse<BookCopyResponse> bookCopies = BookCopyMapper.INSTANCE.bookCopyPageableDtoListToPageableResponse(
-            bookCopyService.searchBookCopies(bookCopySearchCriteria, currentPage, pageSize)
-        );
-        return ApiResponse.okResponse(bookCopies, "Book copies retrieved successfully");
+        PageableDto<BookCopyDto> pageResult =
+                bookCopyService.searchBookCopies(bookCopySearchCriteria, params.page(), params.size());
+        PageableResponse<BookCopyResponse> response = BookCopyMapper.INSTANCE.toPageableResponse(pageResult);
+
+        return ApiResponse.okResponse(response, "Book copies retrieved successfully");
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<BookCopyResponse>> createBookCopy(@RequestBody BookCopyCreateRequest bookCopyCreateRequest) {
-        BookCopyResponse createdBookCopy = BookCopyMapper.INSTANCE.bookCopyDtoToBookCopyResponse(
-            bookCopyService.createBookCopy(bookCopyCreateRequest)
-        );
-        return ApiResponse.createdResponse(createdBookCopy, "Book copy created successfully", createdBookCopy.id());
+    public ResponseEntity<ApiResponse<BookCopyResponse>> createBookCopy(
+        @Valid @RequestBody BookCopyCreateRequest bookCopyCreateRequest
+    ) {
+        BookCopyDto dto = bookCopyService.createBookCopy(bookCopyCreateRequest);
+        BookCopyResponse response = BookCopyMapper.INSTANCE.toBookCopyResponse(dto);
+
+        return ApiResponse.createdResponse(response, "Book copy created successfully", response.id());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<BookCopyResponse>> updateBookCopy(
-        @PathVariable("id") UUID id,
-        @RequestBody BookCopyUpdateRequest bookCopyUpdateRequest
+        @PathVariable("id") @NotNull UUID id,
+        @Valid @RequestBody BookCopyUpdateRequest bookCopyUpdateRequest
     ) {
-        BookCopyResponse updatedBookCopy = BookCopyMapper.INSTANCE.bookCopyDtoToBookCopyResponse(
-            bookCopyService.updateBookCopyById(id, bookCopyUpdateRequest)
-        );
-        return ApiResponse.okResponse(updatedBookCopy, "Book copy updated successfully");
+        BookCopyDto dto = bookCopyService.updateBookCopyById(id, bookCopyUpdateRequest);
+        BookCopyResponse response = BookCopyMapper.INSTANCE.toBookCopyResponse(dto);
+
+        return ApiResponse.okResponse(response, "Book copy updated successfully");
     }
 
     @DeleteMapping("/{id}")

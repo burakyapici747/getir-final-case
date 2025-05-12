@@ -104,6 +104,7 @@ public class BorrowingServiceImpl implements BorrowingService {
             barcode,
             patron.getId()
         );
+
         validateReturnRequest(bookCopy, book, patron, borrowing);
 
         BookCopyStatus bookCopyStatus = processWaitListAndReturnBookCopyStatus(book.getId(), bookCopy, borrowReturnRequest.returnType());

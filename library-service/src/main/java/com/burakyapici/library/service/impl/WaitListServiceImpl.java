@@ -93,7 +93,7 @@ public class WaitListServiceImpl implements WaitListService {
 
         waitListRepository.save(waitList);
 
-        return WaitListMapper.INSTANCE.waitListToWaitListDto(waitList);
+        return WaitListMapper.INSTANCE.toWaitListDtoList(waitList);
     }
 
     @Override
@@ -161,14 +161,14 @@ public class WaitListServiceImpl implements WaitListService {
                 List.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
         );
 
-        return WaitListMapper.INSTANCE.waitListToWaitListDto(waitLists);
+        return WaitListMapper.INSTANCE.toWaitListDtoList(waitLists);
     }
 
     @Override
     public PageableDto<WaitListDto> getWaitListsByBookId(UUID bookId, int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(currentPage, pageSize);
         Page<WaitList> allWaitListsPage = waitListRepository.findByBookId(bookId, pageable);
-        List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.waitListToWaitListDto(allWaitListsPage.getContent());
+        List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.toWaitListDtoList(allWaitListsPage.getContent());
 
         return new PageableDto<>(
                 waitListDto,
@@ -184,7 +184,7 @@ public class WaitListServiceImpl implements WaitListService {
     public PageableDto<WaitListDto> getAllWaitLists(int currentPage, int pageSize) {
         Pageable pageable = PageRequest.of(currentPage, pageSize);
         Page<WaitList> allWaitListsPage = waitListRepository.findAll(pageable);
-        List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.waitListToWaitListDto(allWaitListsPage.getContent());
+        List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.toWaitListDtoList(allWaitListsPage.getContent());
 
         return new PageableDto<>(
                 waitListDto,
@@ -204,7 +204,7 @@ public class WaitListServiceImpl implements WaitListService {
     @Override
     public List<WaitListDto> getByBookIdAndStatus(UUID bookId, WaitListStatus waitListStatus) {
         List<WaitList> waitLists = waitListRepository.findByBookIdAndStatus(bookId, waitListStatus);
-        return WaitListMapper.INSTANCE.waitListToWaitListDto(waitLists);
+        return WaitListMapper.INSTANCE.toWaitListDtoList(waitLists);
     }
 
     @Override

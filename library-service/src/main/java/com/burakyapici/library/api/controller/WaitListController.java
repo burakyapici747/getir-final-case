@@ -1,12 +1,16 @@
 package com.burakyapici.library.api.controller;
 
 import com.burakyapici.library.api.ApiResponse;
+import com.burakyapici.library.api.dto.request.PageableParams;
 import com.burakyapici.library.api.dto.request.PlaceHoldRequest;
 import com.burakyapici.library.api.dto.response.PageableResponse;
 import com.burakyapici.library.api.dto.response.WaitListResponse;
 import com.burakyapici.library.common.mapper.WaitListMapper;
+import com.burakyapici.library.domain.dto.PageableDto;
+import com.burakyapici.library.domain.dto.WaitListDto;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.WaitListService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,7 +33,7 @@ public class WaitListController {
     public ResponseEntity<ApiResponse<List<WaitListResponse>>> getMyHolds(
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        List<WaitListResponse> waitLists = WaitListMapper.INSTANCE.waitListDtoToWaitListResponse(
+        List<WaitListResponse> waitLists = WaitListMapper.INSTANCE.toWaitListResponse(
             waitListService.getWaitListsByPatronId(userDetails.getId())
         );
 
@@ -39,27 +43,25 @@ public class WaitListController {
     @GetMapping("/book/{bookId}")
     public ResponseEntity<ApiResponse<PageableResponse<WaitListResponse>>> getWaitListForBook(
         @PathVariable("bookId") UUID bookId,
-        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
-        @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
+        @Valid PageableParams params
     ) {
-        PageableResponse<WaitListResponse> waitLists = WaitListMapper.INSTANCE.pageableDtoToPageableResponse(
-            waitListService.getWaitListsByBookId(bookId, currentPage, pageSize)
-        );
+        PageableDto<WaitListDto> pageResult = waitListService.getWaitListsByBookId(bookId, params.page(), params.size());
 
-        return ApiResponse.okResponse(waitLists, "Wait list for book retrieved successfully");
+        PageableResponse<WaitListResponse> response = WaitListMapper.INSTANCE.toPageableResponse(pageResult);
+
+        return ApiResponse.okResponse(response, "Wait list for book retrieved successfully");
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<PageableResponse<WaitListResponse>>> getAllWaitLists(
-        @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
-        @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
+        @Valid PageableParams params
     ) {
-        PageableResponse<WaitListResponse> waitLists = WaitListMapper.INSTANCE.pageableDtoToPageableResponse(
-            waitListService.getAllWaitLists(currentPage, pageSize)
-        );
+        PageableDto<WaitListDto> pageResult = waitListService.getAllWaitLists(params.page(), params.size());
 
-        return ApiResponse.okResponse(waitLists, "All wait lists retrieved successfully");
+        PageableResponse<WaitListResponse> response = WaitListMapper.INSTANCE.toPageableResponse(pageResult);
+
+        return ApiResponse.okResponse(response, "All wait lists retrieved successfully");
     }
 
     @PostMapping
@@ -67,7 +69,7 @@ public class WaitListController {
         @RequestBody PlaceHoldRequest placeHoldRequest,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        WaitListResponse waitList = WaitListMapper.INSTANCE.waitListDtoToWaitListResponse(
+        WaitListResponse waitList = WaitListMapper.INSTANCE.toWaitListResponse(
             waitListService.placeHold(placeHoldRequest, userDetails.getId())
         );
 

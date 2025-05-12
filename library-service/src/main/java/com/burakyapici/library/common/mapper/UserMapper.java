@@ -16,14 +16,14 @@ import java.util.List;
 public interface UserMapper {
     UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
-    UserDto userToUserDto(User user);
-    List<UserDto> userListToUserDtoList(List<User> users);
+    UserDto toUserDto(User user);
+    List<UserDto> toUserDtoList(List<User> users);
 
-    UserDetailDto userToUserDetailDto(User user);
+    UserDetailDto toUserDetailDto(User user);
 
-    UserDetailResponse userDetailDtoToUserDetailResponse(UserDetailDto userDetailDto);
+    UserDetailResponse toUserDetailResponse(UserDetailDto userDetailDto);
 
-    PageableResponse<UserDto> pageableDtoToPageableResponse(PageableDto<UserDto> pageableDto);
+    PageableResponse<UserDto> toPageableResponse(PageableDto<UserDto> pageableDto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", ignore = true)

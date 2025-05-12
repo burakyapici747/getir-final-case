@@ -25,5 +25,5 @@ public interface BookService {
     Optional<Book> findBookByIdAndAuthorId(UUID bookId, UUID authorId);
     int calculateAvailableCopiesCount(UUID bookId);
     Book saveBook(Book book);
-    void deleteBookById(UUID id);
+    void deleteById(UUID id);
 }

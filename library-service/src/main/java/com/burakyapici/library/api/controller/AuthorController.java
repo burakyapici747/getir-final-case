@@ -72,7 +72,7 @@ public class AuthorController {
         @PathVariable("id") UUID id,
         @PathVariable("bookId") UUID bookId
     ) {
-        List<BookResponse> books = BookMapper.INSTANCE.bookDtoListToBookResponseList(
+        List<BookResponse> books = BookMapper.INSTANCE.toResponse(
             authorService.addBookToAuthor(id, bookId)
         );
         return ApiResponse.okResponse(books, "Book added to author successfully");
