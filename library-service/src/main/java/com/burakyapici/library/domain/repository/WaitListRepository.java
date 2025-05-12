@@ -50,9 +50,9 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
             nativeQuery = true
     )
     Optional<WaitList> findWaitListByBookIdAndUserIdAndWaitListStatusIn(
-            @Param("bookId") UUID bookId,
-            @Param("userId") UUID userId,
-            @Param("waitListStatuses") Set<WaitListStatus> waitListStatuses
+        @Param("bookId") UUID bookId,
+        @Param("userId") UUID userId,
+        @Param("waitListStatuses") Set<String> waitListStatuses
     );
 
     @Query(
@@ -118,10 +118,11 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
         WHERE book_id = :bookId 
         AND status = :status 
         ORDER BY start_date ASC
-        """,
+        LIMIT 1
+    """,
             nativeQuery = true
     )
-    List<WaitList> findByBookIdAndStatusOrderByStartDateAsc(
+    Optional<WaitList> findTopByBookIdAndStatusOrderByStartDateAsc(
         @Param("bookId") UUID bookId,
         @Param("status") String status
     );
@@ -136,4 +137,5 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
     )
     @Modifying
     void deleteByBookCopyId(@Param("bookCopyId") UUID bookCopyId);
+
 }

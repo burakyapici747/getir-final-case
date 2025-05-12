@@ -25,7 +25,10 @@ public class WaitListController {
     }
 
     @GetMapping("/my-holds")
-    public ResponseEntity<ApiResponse<List<WaitListResponse>>> getMyHolds(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    @PreAuthorize("hasRole('ROLE_PATRON')")
+    public ResponseEntity<ApiResponse<List<WaitListResponse>>> getMyHolds(
+        @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
         List<WaitListResponse> waitLists = WaitListMapper.INSTANCE.waitListDtoToWaitListResponse(
             waitListService.getWaitListsByPatronId(userDetails.getId())
         );
@@ -35,7 +38,7 @@ public class WaitListController {
 
     @GetMapping("/book/{bookId}")
     public ResponseEntity<ApiResponse<PageableResponse<WaitListResponse>>> getWaitListForBook(
-        @PathVariable UUID bookId,
+        @PathVariable("bookId") UUID bookId,
         @RequestParam(name = "page", defaultValue = "0", required = false) int currentPage,
         @RequestParam(name = "size", defaultValue = "10", required = false) int pageSize
     ) {
@@ -73,7 +76,7 @@ public class WaitListController {
 
     @DeleteMapping("/{waitListId}")
     public ResponseEntity<ApiResponse<Void>> cancelHold(
-        @PathVariable UUID waitListId,
+        @PathVariable("waitListId") UUID waitListId,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         waitListService.cancelHold(waitListId, userDetails.getId());

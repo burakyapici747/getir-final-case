@@ -45,16 +45,16 @@ public class WaitListServiceImpl implements WaitListService {
     private final CancelHoldValidationHandler cancelHoldValidationHandler;
 
     public WaitListServiceImpl(
-        WaitListRepository waitListRepository,
-        @Lazy
-        BookService bookService,
-        UserService userService,
-        @Lazy
-        BookCopyService bookCopyService,
-        @Qualifier("waitListValidationChain")
-        WaitListValidationHandler waitListValidationHandler,
-        @Qualifier("cancelHoldValidationChain")
-        CancelHoldValidationHandler cancelHoldValidationHandler
+            WaitListRepository waitListRepository,
+            @Lazy
+            BookService bookService,
+            UserService userService,
+            @Lazy
+            BookCopyService bookCopyService,
+            @Qualifier("waitListValidationChain")
+            WaitListValidationHandler waitListValidationHandler,
+            @Qualifier("cancelHoldValidationChain")
+            CancelHoldValidationHandler cancelHoldValidationHandler
     ) {
         this.waitListRepository = waitListRepository;
         this.bookService = bookService;
@@ -81,13 +81,15 @@ public class WaitListServiceImpl implements WaitListService {
             Optional.empty(),
             availableCopies
         );
-        
+
         waitListValidationHandler.handle(validationRequest);
 
-        WaitList waitList = new WaitList();
-        waitList.setUser(patron);
-        waitList.setStartDate(LocalDateTime.now());
-        waitList.setStatus(WaitListStatus.WAITING);
+        WaitList waitList = WaitList.builder()
+            .user(patron)
+            .book(book)
+            .startDate(LocalDateTime.now())
+            .status(WaitListStatus.WAITING)
+            .build();
 
         waitListRepository.save(waitList);
 
@@ -104,7 +106,7 @@ public class WaitListServiceImpl implements WaitListService {
             waitList,
             waitListId
         );
-        
+
         cancelHoldValidationHandler.handle(validationRequest);
 
         if (WaitListStatus.READY_FOR_PICKUP.equals(waitList.getStatus())) {
@@ -132,14 +134,14 @@ public class WaitListServiceImpl implements WaitListService {
             }
 
             Set<UUID> missingWaitListIds = waitListIds.stream()
-                .filter(id -> !foundWaitListIds.contains(id))
-                .collect(Collectors.toSet());
+                    .filter(id -> !foundWaitListIds.contains(id))
+                    .collect(Collectors.toSet());
 
             throw new WaitListNotFoundException(
-                "The following wait list IDs could not be found: " +
+                    "The following wait list IDs could not be found: " +
                     missingWaitListIds.stream()
-                        .map(UUID::toString)
-                        .collect(Collectors.joining(", "))
+                            .map(UUID::toString)
+                            .collect(Collectors.joining(", "))
             );
         }
 
@@ -150,13 +152,13 @@ public class WaitListServiceImpl implements WaitListService {
     public List<WaitListDto> getWaitListsByPatronId(UUID patronId) {
         User patron = userService.getUserByIdOrElseThrow(patronId);
 
-        if(patron.getPatronStatus() == null || !PatronStatus.ACTIVE.equals(patron.getPatronStatus())) {
+        if (patron.getPatronStatus() == null || !PatronStatus.ACTIVE.equals(patron.getPatronStatus())) {
             throw new PatronStatusValidationException("Patron status is not active");
         }
 
         List<WaitList> waitLists = waitListRepository.findByUser_IdAndStatusIn(
-            patronId,
-            List.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
+                patronId,
+                List.of(WaitListStatus.WAITING, WaitListStatus.READY_FOR_PICKUP)
         );
 
         return WaitListMapper.INSTANCE.waitListToWaitListDto(waitLists);
@@ -169,12 +171,12 @@ public class WaitListServiceImpl implements WaitListService {
         List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.waitListToWaitListDto(allWaitListsPage.getContent());
 
         return new PageableDto<>(
-            waitListDto,
-            allWaitListsPage.getTotalPages(),
-            WaitListServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
-            currentPage,
-            allWaitListsPage.hasNext(),
-            allWaitListsPage.hasPrevious()
+                waitListDto,
+                allWaitListsPage.getTotalPages(),
+                WaitListServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
+                currentPage,
+                allWaitListsPage.hasNext(),
+                allWaitListsPage.hasPrevious()
         );
     }
 
@@ -185,12 +187,12 @@ public class WaitListServiceImpl implements WaitListService {
         List<WaitListDto> waitListDto = WaitListMapper.INSTANCE.waitListToWaitListDto(allWaitListsPage.getContent());
 
         return new PageableDto<>(
-            waitListDto,
-            allWaitListsPage.getTotalPages(),
-            WaitListServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
-            currentPage,
-            allWaitListsPage.hasNext(),
-            allWaitListsPage.hasPrevious()
+                waitListDto,
+                allWaitListsPage.getTotalPages(),
+                WaitListServiceImpl.TOTAL_ELEMENTS_PER_PAGE,
+                currentPage,
+                allWaitListsPage.hasNext(),
+                allWaitListsPage.hasPrevious()
         );
     }
 
@@ -225,8 +227,13 @@ public class WaitListServiceImpl implements WaitListService {
         waitListRepository.deleteByBookCopyId(bookCopyId);
     }
 
+    @Override
+    public Optional<WaitList> getTopByBookIdAndStatusOrderByStartDateAsc(UUID bookId, WaitListStatus status) {
+        return waitListRepository.findTopByBookIdAndStatusOrderByStartDateAsc(bookId, status.name());
+    }
+
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {
         return waitListRepository.findById(waitListId)
-            .orElseThrow(() -> new EntityNotFoundException("Wait list not found with ID: " + waitListId));
+                .orElseThrow(() -> new EntityNotFoundException("Wait list not found with ID: " + waitListId));
     }
 }

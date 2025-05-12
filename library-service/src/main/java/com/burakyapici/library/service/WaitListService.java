@@ -24,4 +24,5 @@ public interface WaitListService {
     WaitList saveWaitList(WaitList waitList);
     void deleteByBookId(UUID bookId);
     void deleteByBookCopyId(UUID bookCopyId);
+    Optional<WaitList> getTopByBookIdAndStatusOrderByStartDateAsc(UUID bookId, WaitListStatus status);
 }

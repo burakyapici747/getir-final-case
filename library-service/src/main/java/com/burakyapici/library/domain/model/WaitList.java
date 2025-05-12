@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -32,49 +31,8 @@ public class WaitList extends BaseModel {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_copy_id")
     private BookCopy reservedBookCopy;
-    
-    public User getUser() {
-        return user;
-    }
-    
-    public void setUser(User user) {
-        this.user = user;
-    }
-    
-    public LocalDateTime getStartDate() {
-        return startDate;
-    }
-    
-    public void setStartDate(LocalDateTime startDate) {
-        this.startDate = startDate;
-    }
-    
-    public LocalDateTime getEndDate() {
-        return endDate;
-    }
-    
-    public void setEndDate(LocalDateTime endDate) {
-        this.endDate = endDate;
-    }
-    
-    public WaitListStatus getStatus() {
-        return status;
-    }
-    
-    public void setStatus(WaitListStatus status) {
-        this.status = status;
-    }
-    
-    public BookCopy getReservedBookCopy() {
-        return reservedBookCopy;
-    }
-    
-    public void setReservedBookCopy(BookCopy reservedBookCopy) {
-        this.reservedBookCopy = reservedBookCopy;
-    }
-    
-    @Override
-    public UUID getId() {
-        return super.getId();
-    }
+
+    @ManyToOne
+    @JoinColumn(name = "book_id", referencedColumnName = "id")
+    private Book book;
 }
