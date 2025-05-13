@@ -1,34 +1,45 @@
 package com.burakyapici.library.config;
 
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.*;
 import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.*;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.jwt.*;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.*;
+import java.security.interfaces.*;
+import java.security.spec.*;
 
 @Configuration
 public class JwtConfig {
+
     @Bean
     public KeyPair keyPair() {
         try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize(2048);
-            return keyPairGenerator.generateKeyPair();
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to generate RSA key pair", e);
+            byte[] privateKeyBytes = readKeyFromClasspath("keys/private.key");
+            byte[] publicKeyBytes = readKeyFromClasspath("keys/public.key");
+
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+            PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
+            PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
+
+            return new KeyPair(publicKey, privateKey);
+        } catch (IOException | GeneralSecurityException e) {
+            throw new IllegalStateException("Failed to load RSA key pair from resources", e);
+        }
+    }
+
+    private byte[] readKeyFromClasspath(String path) throws IOException {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
+            if (is == null) {
+                throw new IOException("Key file not found: " + path);
+            }
+            return is.readAllBytes();
         }
     }
 
@@ -39,7 +50,7 @@ public class JwtConfig {
 
         JWK jwk = new RSAKey.Builder(publicKey)
             .privateKey(privateKey)
-            .keyID(UUID.randomUUID().toString())
+            .keyID("library-jwt-key")
             .build();
 
         JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
@@ -51,5 +62,4 @@ public class JwtConfig {
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         return NimbusJwtDecoder.withPublicKey(publicKey).build();
     }
-
 }

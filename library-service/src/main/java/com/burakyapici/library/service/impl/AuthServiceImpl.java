@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
             return new LoginResponse(
                 accessToken,
                 "Bearer",
-                5,
+                3600,
                 userDetails.getEmail()
             );
         } catch (AuthenticationException e) {

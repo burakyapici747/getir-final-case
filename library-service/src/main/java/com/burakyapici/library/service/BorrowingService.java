@@ -28,4 +28,6 @@ public interface BorrowingService {
     List<BorrowingDto> getCurrentUserBorrowings(UUID userId);
 
     List<BorrowingDto> getUserBorrowingsById(UUID userId);
+
+    void processOverdueBorrowings();
 }

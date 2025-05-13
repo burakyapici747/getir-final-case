@@ -55,7 +55,6 @@ public class UserController {
     }
 
     @GetMapping(path = "/me")
-    @PreAuthorize("hasAnyRole('ROLE_LIBRARIAN', 'ROLE_PATRON')")
     public ResponseEntity<ApiResponse<UserDetailResponse>> getCurrentUser(
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ){

@@ -138,4 +138,6 @@ public interface WaitListRepository extends JpaRepository<WaitList, UUID> {
     @Modifying
     void deleteByBookCopyId(@Param("bookCopyId") UUID bookCopyId);
 
+    List<WaitList> findAllByStatusAndEndDateBefore(WaitListStatus status, LocalDateTime dateTime);
+
 }

@@ -1,6 +1,7 @@
 package com.burakyapici.library.service.impl;
 
 import com.burakyapici.library.api.advice.EntityNotFoundException;
+import com.burakyapici.library.api.dto.request.BookAvailabilityUpdateEvent;
 import com.burakyapici.library.api.dto.request.PlaceHoldRequest;
 import com.burakyapici.library.common.mapper.WaitListMapper;
 import com.burakyapici.library.domain.dto.PageableDto;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Sinks;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -41,18 +43,19 @@ public class WaitListServiceImpl implements WaitListService {
     private final WaitListRepository waitListRepository;
     private final WaitListValidationHandler waitListValidationHandler;
     private final CancelHoldValidationHandler cancelHoldValidationHandler;
+    private final Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink;
 
     public WaitListServiceImpl(
-        WaitListRepository waitListRepository,
-        @Lazy
+            WaitListRepository waitListRepository,
+            @Lazy
         BookService bookService,
-        UserService userService,
-        @Lazy
+            UserService userService,
+            @Lazy
         BookCopyService bookCopyService,
-        @Qualifier("waitListValidationChain")
+            @Qualifier("waitListValidationChain")
         WaitListValidationHandler waitListValidationHandler,
-        @Qualifier("cancelHoldValidationChain")
-        CancelHoldValidationHandler cancelHoldValidationHandler
+            @Qualifier("cancelHoldValidationChain")
+        CancelHoldValidationHandler cancelHoldValidationHandler, Sinks.Many<BookAvailabilityUpdateEvent> bookAvailabilitySink
     ) {
         this.waitListRepository = waitListRepository;
         this.bookService = bookService;
@@ -60,6 +63,7 @@ public class WaitListServiceImpl implements WaitListService {
         this.bookCopyService = bookCopyService;
         this.waitListValidationHandler = waitListValidationHandler;
         this.cancelHoldValidationHandler = cancelHoldValidationHandler;
+        this.bookAvailabilitySink = bookAvailabilitySink;
     }
 
     @Override
@@ -185,6 +189,28 @@ public class WaitListServiceImpl implements WaitListService {
         return waitListRepository.findTopByBookIdAndStatusOrderByStartDateAsc(bookId, status.name());
     }
 
+    @Override
+    public void processExpiredWaitListEntries() {
+        LocalDateTime now = LocalDateTime.now();
+        List<WaitList> expiredEntries = waitListRepository.findAllByStatusAndEndDateBefore(
+            WaitListStatus.READY_FOR_PICKUP, now
+        );
+
+        if (expiredEntries != null && !expiredEntries.isEmpty()) {
+            for (WaitList entry : expiredEntries) {
+                entry.setStatus(WaitListStatus.CANCELLED);
+
+                BookCopy reservedBookCopy = entry.getReservedBookCopy();
+                if (reservedBookCopy != null && reservedBookCopy.getStatus() == BookCopyStatus.ON_HOLD) {
+                    reservedBookCopy.setStatus(BookCopyStatus.AVAILABLE);
+                    bookCopyService.saveBookCopy(reservedBookCopy);
+                    publishBookAvailabilityUpdateEvent(reservedBookCopy);
+                }
+            }
+            waitListRepository.saveAll(expiredEntries);
+        }
+    }
+
     private WaitList findWaitListByIdOrElseThrow(UUID waitListId) {
         return waitListRepository.findById(waitListId)
             .orElseThrow(() -> new EntityNotFoundException("Wait list not found with ID: " + waitListId));
@@ -270,5 +296,14 @@ public class WaitListServiceImpl implements WaitListService {
             waitListsPage.hasNext(),
             waitListsPage.hasPrevious()
         );
+    }
+
+    private void publishBookAvailabilityUpdateEvent(BookCopy bookCopy) {
+        int newAvailableCount = bookCopyService.countByIdAndStatus(bookCopy.getBook().getId(), BookCopyStatus.AVAILABLE);
+
+        BookAvailabilityUpdateEvent event =
+                new BookAvailabilityUpdateEvent(bookCopy.getBook().getId(), newAvailableCount);
+
+        bookAvailabilitySink.emitNext(event, Sinks.EmitFailureHandler.FAIL_FAST);
     }
 }

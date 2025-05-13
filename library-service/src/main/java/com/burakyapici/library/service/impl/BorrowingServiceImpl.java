@@ -164,7 +164,6 @@ public class BorrowingServiceImpl implements BorrowingService {
             .toList();
     }
 
-    @Override
     public List<BorrowingDto> getUserBorrowingsById(UUID userId) {
         userService.getUserByIdOrElseThrow(userId);
         List<Borrowing> borrowings = borrowingRepository.findAllByUserId(userId);
@@ -172,6 +171,20 @@ public class BorrowingServiceImpl implements BorrowingService {
         return borrowings.stream()
             .map(BorrowMapper.INSTANCE::toBorrowingDto)
             .toList();
+    }
+
+    @Override
+    public void processOverdueBorrowings() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Borrowing> overdueBorrowings = borrowingRepository.findAllByStatusAndDueDateBefore(BorrowStatus.BORROWED, now);
+
+        if (overdueBorrowings != null && !overdueBorrowings.isEmpty()) {
+            for (Borrowing borrowing : overdueBorrowings) {
+                borrowing.setStatus(BorrowStatus.OVERDUE);
+            }
+            borrowingRepository.saveAll(overdueBorrowings);
+            // Loglama eklenebilir: "Processed N overdue borrowings."
+        }
     }
 
     private Optional<WaitList> findReadyForPickupWaitListEntry(User patron, Book book) {

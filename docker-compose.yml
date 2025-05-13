@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: library_postgres-db
+    environment:
+      POSTGRES_DB: librarydb
+      POSTGRES_USER: library_user
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - library-network
+
+  library-service:
+    build:
+      context: .
+      dockerfile: library-service/Docker/Dockerfile
+    container_name: library-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - library-network
+
+volumes:
+  postgres_data:
+
+networks:
+  library-network:
+    driver: bridge

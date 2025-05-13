@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,6 +60,7 @@ public class BookCopyController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookCopyResponse>> createBookCopy(
         @Valid @RequestBody BookCopyCreateRequest bookCopyCreateRequest
     ) {
@@ -69,6 +71,7 @@ public class BookCopyController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookCopyResponse>> updateBookCopy(
         @PathVariable("id") @NotNull UUID id,
         @Valid @RequestBody BookCopyUpdateRequest bookCopyUpdateRequest
@@ -80,6 +83,7 @@ public class BookCopyController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<Void>> deleteBookCopyById(@PathVariable("id") UUID id) {
         bookCopyService.deleteBookCopyById(id);
         return ApiResponse.noContentResponse("Book copy deleted successfully");
