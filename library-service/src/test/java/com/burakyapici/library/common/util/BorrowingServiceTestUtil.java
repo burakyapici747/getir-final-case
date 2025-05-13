@@ -80,11 +80,28 @@ public class BorrowingServiceTestUtil {
     }
     
     public static BorrowingDto createSampleBorrowingDto(Borrowing borrowing) {
+        Book book = borrowing.getBookCopy().getBook();
+        String borrowedByStaffName = borrowing.getBorrowedByStaff().getFirstName() + " " + borrowing.getBorrowedByStaff().getLastName();
+        String returnedByStaffName = null;
+        if (borrowing.getReturnedByStaff() != null) {
+            returnedByStaffName = borrowing.getReturnedByStaff().getFirstName() + " " + borrowing.getReturnedByStaff().getLastName();
+        }
+        
         return new BorrowingDto(
-                borrowing.getUser(),
-                borrowing.getBookCopy(),
-                borrowing.getBorrowedByStaff(),
-                borrowing.getReturnedByStaff(),
+                borrowing.getId(),
+                borrowing.getUser().getId(),
+                borrowing.getUser().getEmail(),
+                borrowing.getUser().getFirstName(),
+                borrowing.getUser().getLastName(),
+                borrowing.getBookCopy().getId(),
+                borrowing.getBookCopy().getBarcode(),
+                book.getId(),
+                book.getTitle(),
+                book.getIsbn(),
+                borrowing.getBorrowedByStaff().getId(),
+                borrowedByStaffName,
+                borrowing.getReturnedByStaff() != null ? borrowing.getReturnedByStaff().getId() : null,
+                returnedByStaffName,
                 borrowing.getBorrowDate(),
                 borrowing.getDueDate(),
                 borrowing.getReturnDate(),

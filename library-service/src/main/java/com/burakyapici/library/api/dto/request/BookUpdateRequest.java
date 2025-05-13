@@ -10,7 +10,6 @@ public record BookUpdateRequest(
     @Size(min = 1, max = 255, message = "Title must be between 1 and 255 characters if provided")
     String title,
 
-    @NotNull(message = "Book status cannot be null")
     BookStatus bookStatus,
 
     @Min(value = 1, message = "Page count must be at least 1")

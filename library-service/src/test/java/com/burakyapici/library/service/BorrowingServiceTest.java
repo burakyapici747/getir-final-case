@@ -1,5 +1,6 @@
 package com.burakyapici.library.service;
 
+import com.burakyapici.library.api.advice.EntityNotFoundException;
 import com.burakyapici.library.api.dto.request.BookAvailabilityUpdateEvent;
 import com.burakyapici.library.api.dto.request.BorrowBookCopyRequest;
 import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
@@ -32,11 +33,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Sinks;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -104,9 +110,13 @@ public class BorrowingServiceTest {
         BorrowingDto result = borrowingService.borrowBookCopyByBarcode(barcode, borrowRequest, librarian);
         
         assertNotNull(result);
-        assertEquals(patron, result.user());
-        assertEquals(bookCopy, result.bookCopy());
-        assertEquals(librarianUser, result.borrowedByStaff());
+        assertEquals(patronId, result.userId());
+        assertEquals(patron.getEmail(), result.userEmail());
+        assertEquals(patron.getFirstName(), result.userFirstName());
+        assertEquals(patron.getLastName(), result.userLastName());
+        assertEquals(bookCopy.getId(), result.bookCopyId());
+        assertEquals(barcode, result.bookCopyBarcode());
+        assertEquals(librarianUser.getId(), result.borrowedByStaffId());
         assertEquals(BorrowStatus.BORROWED, result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
@@ -156,9 +166,13 @@ public class BorrowingServiceTest {
         BorrowingDto result = borrowingService.borrowBookCopyByBarcode(barcode, borrowRequest, librarian);
         
         assertNotNull(result);
-        assertEquals(patron, result.user());
-        assertEquals(bookCopy, result.bookCopy());
-        assertEquals(librarianUser, result.borrowedByStaff());
+        assertEquals(patronId, result.userId());
+        assertEquals(patron.getEmail(), result.userEmail());
+        assertEquals(patron.getFirstName(), result.userFirstName());
+        assertEquals(patron.getLastName(), result.userLastName());
+        assertEquals(bookCopy.getId(), result.bookCopyId());
+        assertEquals(barcode, result.bookCopyBarcode());
+        assertEquals(librarianUser.getId(), result.borrowedByStaffId());
         assertEquals(BorrowStatus.BORROWED, result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
@@ -210,10 +224,14 @@ public class BorrowingServiceTest {
         BorrowingDto result = borrowingService.returnBookCopyByBarcode(barcode, returnRequest, librarian);
         
         assertNotNull(result);
-        assertEquals(patron, result.user());
-        assertEquals(bookCopy, result.bookCopy());
-        assertEquals(librarianUser, result.borrowedByStaff());
-        assertEquals(librarianUser, result.returnedByStaff());
+        assertEquals(patronId, result.userId());
+        assertEquals(patron.getEmail(), result.userEmail());
+        assertEquals(patron.getFirstName(), result.userFirstName());
+        assertEquals(patron.getLastName(), result.userLastName());
+        assertEquals(bookCopy.getId(), result.bookCopyId());
+        assertEquals(barcode, result.bookCopyBarcode());
+        assertEquals(librarianUser.getId(), result.borrowedByStaffId());
+        assertEquals(librarianUser.getId(), result.returnedByStaffId());
         assertEquals(ReturnType.NORMAL.getBorrowStatus(), result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
@@ -270,10 +288,14 @@ public class BorrowingServiceTest {
         BorrowingDto result = borrowingService.returnBookCopyByBarcode(barcode, returnRequest, librarian);
         
         assertNotNull(result);
-        assertEquals(patron, result.user());
-        assertEquals(bookCopy, result.bookCopy());
-        assertEquals(librarianUser, result.borrowedByStaff());
-        assertEquals(librarianUser, result.returnedByStaff());
+        assertEquals(patronId, result.userId());
+        assertEquals(patron.getEmail(), result.userEmail());
+        assertEquals(patron.getFirstName(), result.userFirstName());
+        assertEquals(patron.getLastName(), result.userLastName());
+        assertEquals(bookCopy.getId(), result.bookCopyId());
+        assertEquals(barcode, result.bookCopyBarcode());
+        assertEquals(librarianUser.getId(), result.borrowedByStaffId());
+        assertEquals(librarianUser.getId(), result.returnedByStaffId());
         assertEquals(ReturnType.NORMAL.getBorrowStatus(), result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
@@ -325,10 +347,14 @@ public class BorrowingServiceTest {
         BorrowingDto result = borrowingService.returnBookCopyByBarcode(barcode, returnRequest, librarian);
         
         assertNotNull(result);
-        assertEquals(patron, result.user());
-        assertEquals(bookCopy, result.bookCopy());
-        assertEquals(librarianUser, result.borrowedByStaff());
-        assertEquals(librarianUser, result.returnedByStaff());
+        assertEquals(patronId, result.userId());
+        assertEquals(patron.getEmail(), result.userEmail());
+        assertEquals(patron.getFirstName(), result.userFirstName());
+        assertEquals(patron.getLastName(), result.userLastName());
+        assertEquals(bookCopy.getId(), result.bookCopyId());
+        assertEquals(barcode, result.bookCopyBarcode());
+        assertEquals(librarianUser.getId(), result.borrowedByStaffId());
+        assertEquals(librarianUser.getId(), result.returnedByStaffId());
         assertEquals(ReturnType.DAMAGED.getBorrowStatus(), result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
@@ -341,6 +367,84 @@ public class BorrowingServiceTest {
         verify(borrowingRepository).save(any(Borrowing.class));
         verify(bookAvailabilitySink).emitNext(any(BookAvailabilityUpdateEvent.class), any());
         verify(waitListService, never()).getTopByBookIdAndStatusOrderByStartDateAsc(any(), any());
+    }
+    
+    @Test
+    @DisplayName("Given user id with borrowings, when getCurrentUserBorrowings, then return list of borrowing dtos")
+    public void givenUserIdWithBorrowings_whenGetCurrentUserBorrowings_thenReturnListOfBorrowingDtos() {
+        UUID userId = UUID.randomUUID();
+        User user = UserServiceTestUtil.createSampleUserWithId(userId);
+        Book book = BookServiceTestUtil.createSampleBookWithId(UUID.randomUUID());
+        BookCopy bookCopy = BookCopyServiceTestUtil.createSampleBookCopyWithBookAndStatus(book, BookCopyStatus.CHECKED_OUT);
+        
+        List<Borrowing> borrowings = new ArrayList<>();
+        borrowings.add(BorrowingServiceTestUtil.createSampleBorrowingWithId(UUID.randomUUID(), user, user, bookCopy));
+        borrowings.add(BorrowingServiceTestUtil.createSampleBorrowingWithId(UUID.randomUUID(), user, user, bookCopy));
+        
+        when(borrowingRepository.findAllByUserId(userId)).thenReturn(borrowings);
+        
+        List<BorrowingDto> result = borrowingService.getCurrentUserBorrowings(userId);
+        
+        assertNotNull(result);
+        assertEquals(borrowings.size(), result.size());
+        assertEquals(userId, result.getFirst().userId());
+        assertEquals(bookCopy.getId(), result.getFirst().bookCopyId());
+        
+        verify(borrowingRepository).findAllByUserId(userId);
+    }
+    
+    @Test
+    @DisplayName("Given user id without borrowings, when getCurrentUserBorrowings, then return empty list")
+    public void givenUserIdWithoutBorrowings_whenGetCurrentUserBorrowings_thenReturnEmptyList() {
+        UUID userId = UUID.randomUUID();
+        
+        when(borrowingRepository.findAllByUserId(userId)).thenReturn(Collections.emptyList());
+        
+        List<BorrowingDto> result = borrowingService.getCurrentUserBorrowings(userId);
+        
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        
+        verify(borrowingRepository).findAllByUserId(userId);
+    }
+    
+    @Test
+    @DisplayName("Given existing user id with borrowings, when getUserBorrowingsById, then return list of borrowing dtos")
+    public void givenExistingUserIdWithBorrowings_whenGetUserBorrowingsById_thenReturnListOfBorrowingDtos() {
+        UUID userId = UUID.randomUUID();
+        User user = UserServiceTestUtil.createSampleUserWithId(userId);
+        Book book = BookServiceTestUtil.createSampleBookWithId(UUID.randomUUID());
+        BookCopy bookCopy = BookCopyServiceTestUtil.createSampleBookCopyWithBookAndStatus(book, BookCopyStatus.CHECKED_OUT);
+        
+        List<Borrowing> borrowings = new ArrayList<>();
+        borrowings.add(BorrowingServiceTestUtil.createSampleBorrowingWithId(UUID.randomUUID(), user, user, bookCopy));
+        borrowings.add(BorrowingServiceTestUtil.createSampleBorrowingWithId(UUID.randomUUID(), user, user, bookCopy));
+        
+        when(userService.getUserByIdOrElseThrow(userId)).thenReturn(user);
+        when(borrowingRepository.findAllByUserId(userId)).thenReturn(borrowings);
+        
+        List<BorrowingDto> result = borrowingService.getUserBorrowingsById(userId);
+        
+        assertNotNull(result);
+        assertEquals(borrowings.size(), result.size());
+        assertEquals(userId, result.getFirst().userId());
+        assertEquals(bookCopy.getId(), result.getFirst().bookCopyId());
+        
+        verify(userService).getUserByIdOrElseThrow(userId);
+        verify(borrowingRepository).findAllByUserId(userId);
+    }
+    
+    @Test
+    @DisplayName("Given non-existing user id, when getUserBorrowingsById, then throw EntityNotFoundException")
+    public void givenNonExistingUserId_whenGetUserBorrowingsById_thenThrowEntityNotFoundException() {
+        UUID userId = UUID.randomUUID();
+        
+        when(userService.getUserByIdOrElseThrow(userId)).thenThrow(new EntityNotFoundException("User not found"));
+        
+        assertThrows(EntityNotFoundException.class, () -> borrowingService.getUserBorrowingsById(userId));
+        
+        verify(userService).getUserByIdOrElseThrow(userId);
+        verify(borrowingRepository, never()).findAllByUserId(any());
     }
     
     @Test

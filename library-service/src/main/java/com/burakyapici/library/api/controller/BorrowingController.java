@@ -38,6 +38,7 @@ public class BorrowingController {
     }
 
     @PatchMapping("/{barcode}")
+    @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<BorrowingDto>> returnBookCopyByBarcode(
         @PathVariable("barcode") String barcode,
         @RequestBody BorrowReturnRequest request,

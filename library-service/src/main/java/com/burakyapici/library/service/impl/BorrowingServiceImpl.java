@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Sinks;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -107,7 +108,8 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         validateReturnRequest(bookCopy, book, patron, borrowing);
 
-        BookCopyStatus bookCopyStatus = processWaitListAndReturnBookCopyStatus(book.getId(), bookCopy, borrowReturnRequest.returnType());
+        BookCopyStatus bookCopyStatus =
+                processWaitListAndReturnBookCopyStatus(book.getId(), bookCopy, borrowReturnRequest.returnType());
 
         bookCopy.setStatus(bookCopyStatus);
         bookCopyService.saveBookCopy(bookCopy);
@@ -151,6 +153,25 @@ public class BorrowingServiceImpl implements BorrowingService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteAllByBookId(UUID bookId) {
         borrowingRepository.deleteAllByBookCopyBookId(bookId);
+    }
+
+    @Override
+    public List<BorrowingDto> getCurrentUserBorrowings(UUID userId) {
+        List<Borrowing> borrowings = borrowingRepository.findAllByUserId(userId);
+
+        return borrowings.stream()
+            .map(BorrowMapper.INSTANCE::toBorrowingDto)
+            .toList();
+    }
+
+    @Override
+    public List<BorrowingDto> getUserBorrowingsById(UUID userId) {
+        userService.getUserByIdOrElseThrow(userId);
+        List<Borrowing> borrowings = borrowingRepository.findAllByUserId(userId);
+
+        return borrowings.stream()
+            .map(BorrowMapper.INSTANCE::toBorrowingDto)
+            .toList();
     }
 
     private Optional<WaitList> findReadyForPickupWaitListEntry(User patron, Book book) {

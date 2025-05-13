@@ -5,6 +5,7 @@ import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
 import com.burakyapici.library.domain.dto.BorrowingDto;
 import com.burakyapici.library.security.UserDetailsImpl;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface BorrowingService {
@@ -23,4 +24,8 @@ public interface BorrowingService {
     void deleteAllByBookCopyId(UUID bookCopyId);
 
     void deleteAllByBookId(UUID bookId);
+
+    List<BorrowingDto> getCurrentUserBorrowings(UUID userId);
+
+    List<BorrowingDto> getUserBorrowingsById(UUID userId);
 }

@@ -82,7 +82,7 @@ public class BookController {
     }
 
     @GetMapping(value = "/{id}/book-availability", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<BookAvailabilityUpdateEvent> streamBookAvailabilityUpdates(@PathVariable(name = "id") UUID id) {
+    public Flux<BookAvailabilityUpdateEvent> streamBookAvailabilityUpdates(@PathVariable(name = "id") @NotNull UUID id) {
         int initialValue = bookService.calculateAvailableCopiesCount(id);
 
         BookAvailabilityUpdateEvent initialEvent = new BookAvailabilityUpdateEvent(id, initialValue);
@@ -102,7 +102,7 @@ public class BookController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookResponse>> updateBook(
-        @PathVariable @NotNull UUID id,
+        @PathVariable("id") @NotNull UUID id,
         @Valid @RequestBody BookUpdateRequest request
     ) {
         BookResponse updatedBook = BookMapper.INSTANCE.toResponse(bookService.updateBook(id, request));
@@ -112,7 +112,7 @@ public class BookController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable("id") @NotNull UUID id) {
         bookService.deleteById(id);
 
         return ApiResponse.noContentResponse("Book deleted successfully.");

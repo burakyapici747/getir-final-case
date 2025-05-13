@@ -38,22 +38,22 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> success(T data, String message) {
         return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .statusCode(HttpStatus.OK.value())
-                .statusName(HttpStatus.OK.name())
-                .data(data)
-                .build();
+            .success(true)
+            .message(message)
+            .statusCode(HttpStatus.OK.value())
+            .statusName(HttpStatus.OK.name())
+            .data(data)
+            .build();
     }
 
     public static <T> ApiResponse<T> success(T data, String message, HttpStatus status) {
         return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .statusCode(status.value())
-                .statusName(status.name())
-                .data(data)
-                .build();
+            .success(true)
+            .message(message)
+            .statusCode(status.value())
+            .statusName(status.name())
+            .data(data)
+            .build();
     }
 
     public static <T> ResponseEntity<ApiResponse<T>> okResponse(T data) {
@@ -68,28 +68,28 @@ public class ApiResponse<T> {
         ApiResponse<T> response = success(data, message, HttpStatus.CREATED);
 
         URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(id)
-                .toUri();
+            .fromCurrentRequest()
+            .path("/{id}")
+            .buildAndExpand(id)
+            .toUri();
 
         return ResponseEntity
-                .created(location)
-                .body(response);
+            .created(location)
+            .body(response);
     }
 
     public static <T, ID> ResponseEntity<ApiResponse<T>> createdResponse(T data, String message, Function<T, ID> idExtractor) {
         ApiResponse<T> response = success(data, message, HttpStatus.CREATED);
 
         URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(idExtractor.apply(data))
-                .toUri();
+            .fromCurrentRequest()
+            .path("/{id}")
+            .buildAndExpand(idExtractor.apply(data))
+            .toUri();
 
         return ResponseEntity
-                .created(location)
-                .body(response);
+            .created(location)
+            .body(response);
     }
 
     public static ResponseEntity<ApiResponse<Void>> noContentResponse(String message) {
@@ -98,7 +98,7 @@ public class ApiResponse<T> {
 
     public static <T> ResponseEntity<ApiResponse<T>> customResponse(T data, String message, HttpStatus status) {
         return ResponseEntity
-                .status(status)
-                .body(success(data, message, status));
+            .status(status)
+            .body(success(data, message, status));
     }
 }

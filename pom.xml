@@ -11,9 +11,6 @@
 
 	<modules>
 		<module>library-service</module>
-		<module>logging-service</module>
-		<module>notification-service</module>
-		<module>batch-service</module>
 	</modules>
 
 	<properties>
@@ -22,11 +19,11 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lombok.version>1.18.38</lombok.version>
 		<postgresql.version>42.7.2</postgresql.version>
-		<springdoc.version>2.3.0</springdoc.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<jjwt.version>0.12.6</jjwt.version>
 		<oauth2.resource.server.version>3.4.5</oauth2.resource.server.version>
 		<oauth2.jose.version>6.4.5</oauth2.jose.version>
+		<open.api.version>2.3.0</open.api.version>
 	</properties>
 
 	<dependencyManagement>
@@ -60,7 +57,7 @@
 			<dependency>
 				<groupId>org.springdoc</groupId>
 				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-				<version>${springdoc.version}</version>
+				<version>${open.api.version}</version>
 			</dependency>
 
 			<dependency>

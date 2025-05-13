@@ -11,6 +11,7 @@ import com.burakyapici.library.domain.dto.WaitListDto;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.WaitListService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/waitlist")
+@RequestMapping(path = "/api/v1/waitlist", produces = MediaType.APPLICATION_JSON_VALUE)
 public class WaitListController {
     private final WaitListService waitListService;
 
@@ -28,7 +29,7 @@ public class WaitListController {
         this.waitListService = waitListService;
     }
 
-    @GetMapping("/my-holds")
+    @GetMapping(path = "/my-holds")
     @PreAuthorize("hasRole('ROLE_PATRON')")
     public ResponseEntity<ApiResponse<List<WaitListResponse>>> getMyHolds(
         @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -40,7 +41,7 @@ public class WaitListController {
         return ApiResponse.okResponse(waitLists, "Your holds retrieved successfully");
     }
 
-    @GetMapping("/book/{bookId}")
+    @GetMapping(path = "/book/{bookId}")
     public ResponseEntity<ApiResponse<PageableResponse<WaitListResponse>>> getWaitListForBook(
         @PathVariable("bookId") UUID bookId,
         @Valid PageableParams params
@@ -64,9 +65,9 @@ public class WaitListController {
         return ApiResponse.okResponse(response, "All wait lists retrieved successfully");
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<WaitListResponse>> placeHold(
-        @RequestBody PlaceHoldRequest placeHoldRequest,
+        @Valid @RequestBody PlaceHoldRequest placeHoldRequest,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         WaitListResponse waitList = WaitListMapper.INSTANCE.toWaitListResponse(
@@ -76,7 +77,7 @@ public class WaitListController {
         return ApiResponse.createdResponse(waitList, "Hold placed successfully", waitList.id());
     }
 
-    @DeleteMapping("/{waitListId}")
+    @DeleteMapping(path = "/{waitListId}")
     public ResponseEntity<ApiResponse<Void>> cancelHold(
         @PathVariable("waitListId") UUID waitListId,
         @AuthenticationPrincipal UserDetailsImpl userDetails
