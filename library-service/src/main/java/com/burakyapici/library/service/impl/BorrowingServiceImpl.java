@@ -4,7 +4,7 @@ import com.burakyapici.library.api.dto.request.BookAvailabilityUpdateEvent;
 import com.burakyapici.library.api.dto.request.BorrowBookCopyRequest;
 import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
 import com.burakyapici.library.common.mapper.BorrowMapper;
-import com.burakyapici.library.domain.dto.BorrowDto;
+import com.burakyapici.library.domain.dto.BorrowingDto;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
 import com.burakyapici.library.domain.enums.BorrowStatus;
 import com.burakyapici.library.domain.enums.ReturnType;
@@ -61,7 +61,7 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BorrowDto borrowBookCopyByBarcode(
+    public BorrowingDto borrowBookCopyByBarcode(
         String barcode,
         BorrowBookCopyRequest borrowBookCopyRequest,
         UserDetailsImpl userDetails
@@ -83,12 +83,12 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         publishBookAvailabilityUpdateEvent(bookCopy);
 
-        return BorrowMapper.INSTANCE.borrowToBorrowDto(savedBorrowing);
+        return BorrowMapper.INSTANCE.toBorrowingDto(savedBorrowing);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BorrowDto returnBookCopyByBarcode(
+    public BorrowingDto returnBookCopyByBarcode(
         String barcode,
         BorrowReturnRequest borrowReturnRequest,
         UserDetailsImpl userDetails
@@ -122,7 +122,7 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         publishBookAvailabilityUpdateEvent(bookCopy);
 
-        return BorrowMapper.INSTANCE.borrowToBorrowDto(savedBorrowing);
+        return BorrowMapper.INSTANCE.toBorrowingDto(savedBorrowing);
     }
 
     private BookCopyStatus processWaitListAndReturnBookCopyStatus(UUID bookId, BookCopy bookCopy, ReturnType returnType) {

@@ -1,6 +1,7 @@
 package com.burakyapici.library.common.mapper;
 
-import com.burakyapici.library.domain.dto.BorrowDto;
+import com.burakyapici.library.api.dto.response.BorrowingResponse;
+import com.burakyapici.library.domain.dto.BorrowingDto;
 import com.burakyapici.library.domain.model.Borrowing;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
@@ -9,5 +10,7 @@ import org.mapstruct.factory.Mappers;
 public interface BorrowMapper {
     BorrowMapper INSTANCE = Mappers.getMapper(BorrowMapper.class);
 
-    BorrowDto borrowToBorrowDto(Borrowing borrow);
+    BorrowingDto toBorrowingDto(Borrowing borrow);
+
+    BorrowingResponse toBorrowingResponse(BorrowingDto borrowingDto);
 }

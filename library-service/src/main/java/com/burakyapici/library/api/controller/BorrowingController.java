@@ -3,7 +3,7 @@ package com.burakyapici.library.api.controller;
 import com.burakyapici.library.api.ApiResponse;
 import com.burakyapici.library.api.dto.request.BorrowBookCopyRequest;
 import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
-import com.burakyapici.library.domain.dto.BorrowDto;
+import com.burakyapici.library.domain.dto.BorrowingDto;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.BorrowingService;
 import jakarta.validation.Valid;
@@ -26,7 +26,7 @@ public class BorrowingController {
 
     @PostMapping("/{barcode}")
     @PreAuthorize("hasRole('ROLE_LIBRARIAN')")
-    public ResponseEntity<ApiResponse<BorrowDto>> borrowBookCopyByBarcode(
+    public ResponseEntity<ApiResponse<BorrowingDto>> borrowBookCopyByBarcode(
         @PathVariable(value = "barcode") String barcode,
         @RequestBody BorrowBookCopyRequest borrowBookCopyRequest,
         @Valid @NotNull @AuthenticationPrincipal UserDetailsImpl librarian
@@ -38,7 +38,7 @@ public class BorrowingController {
     }
 
     @PatchMapping("/{barcode}")
-    public ResponseEntity<ApiResponse<BorrowDto>> returnBookCopyByBarcode(
+    public ResponseEntity<ApiResponse<BorrowingDto>> returnBookCopyByBarcode(
         @PathVariable("barcode") String barcode,
         @RequestBody BorrowReturnRequest request,
         @Valid @NotNull @AuthenticationPrincipal UserDetailsImpl librarian

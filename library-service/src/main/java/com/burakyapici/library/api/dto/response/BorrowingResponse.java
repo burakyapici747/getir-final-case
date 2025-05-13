@@ -1,4 +1,4 @@
-package com.burakyapici.library.domain.dto;
+package com.burakyapici.library.api.dto.response;
 
 import com.burakyapici.library.domain.enums.BorrowStatus;
 import com.burakyapici.library.domain.model.BookCopy;
@@ -6,7 +6,7 @@ import com.burakyapici.library.domain.model.User;
 
 import java.time.LocalDateTime;
 
-public record BorrowingDto(
+public record BorrowingResponse(
     User user,
     BookCopy bookCopy,
     User borrowedByStaff,
