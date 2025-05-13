@@ -88,9 +88,8 @@ public class WaitListServiceImpl implements WaitListService {
             .status(WaitListStatus.WAITING)
             .build();
 
-        waitListRepository.save(waitList);
 
-        return WaitListMapper.INSTANCE.toWaitListDtoList(waitList);
+        return WaitListMapper.INSTANCE.toWaitListDtoList(waitListRepository.save(waitList));
     }
 
     @Override

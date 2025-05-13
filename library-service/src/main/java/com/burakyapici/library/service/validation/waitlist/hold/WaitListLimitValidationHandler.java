@@ -1,10 +1,12 @@
-package com.burakyapici.library.service.validation.waitlist;
+package com.burakyapici.library.service.validation.waitlist.hold;
 
 import com.burakyapici.library.api.advice.UnprocessableEntityException;
 import com.burakyapici.library.config.LibraryRulesConfig;
 import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.WaitList;
 import com.burakyapici.library.domain.repository.WaitListRepository;
+import com.burakyapici.library.service.validation.waitlist.AbstractWaitListValidationHandler;
+import com.burakyapici.library.service.validation.waitlist.PlaceHoldHandlerRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

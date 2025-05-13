@@ -1,4 +1,4 @@
-package com.burakyapici.library.module;
+package com.burakyapici.library;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

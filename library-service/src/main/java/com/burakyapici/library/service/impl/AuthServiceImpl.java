@@ -4,7 +4,6 @@ import com.burakyapici.library.api.dto.request.LoginRequest;
 import com.burakyapici.library.api.dto.request.RegisterRequest;
 import com.burakyapici.library.api.dto.response.LoginResponse;
 import com.burakyapici.library.api.dto.response.RegisterResponse;
-import com.burakyapici.library.domain.enums.PatronStatus;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.AuthService;
