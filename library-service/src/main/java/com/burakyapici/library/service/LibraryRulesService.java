@@ -1,7 +1,7 @@
 package com.burakyapici.library.service;
 
 import com.burakyapici.library.config.LibraryRulesConfig;
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import com.burakyapici.library.domain.model.Borrowing;
 
 import org.springframework.stereotype.Service;
@@ -41,7 +41,7 @@ public class LibraryRulesService {
         }
 
         // Kitap gecikmiş mi kontrolü
-        if (borrowing.getStatus() == BorrowStatus.OVERDUE) {
+        if (borrowing.getStatus() == BorrowingStatus.OVERDUE) {
             return false;
         }
         
@@ -80,10 +80,10 @@ public class LibraryRulesService {
     /**
      * Kitap hasarı veya kaybı durumunda ceza hesaplar
      */
-    public double calculatePenalty(BorrowStatus status) {
-        if (status == BorrowStatus.LOST) {
+    public double calculatePenalty(BorrowingStatus status) {
+        if (status == BorrowingStatus.LOST) {
             return rulesConfig.getLostBookPenalty();
-        } else if (status == BorrowStatus.RETURNED_DAMAGED) {
+        } else if (status == BorrowingStatus.RETURNED_DAMAGED) {
             return rulesConfig.getDamagedBookPenalty();
         }
         return 0.0;

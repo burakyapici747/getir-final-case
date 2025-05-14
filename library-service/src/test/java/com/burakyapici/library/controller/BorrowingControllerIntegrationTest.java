@@ -4,7 +4,7 @@ import com.burakyapici.library.api.controller.BorrowingController;
 import com.burakyapici.library.api.dto.request.BorrowBookCopyRequest;
 import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
 import com.burakyapici.library.domain.dto.BorrowingDto;
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import com.burakyapici.library.domain.enums.ReturnType;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.BorrowingService;
@@ -84,7 +84,7 @@ public class BorrowingControllerIntegrationTest {
                 borrowingId, patronId, "patron@example.com", "Patron", "User",
                 UUID.randomUUID(), barcode, UUID.randomUUID(), "Test Book", "12345",
                 librarianId, "librarian@example.com", null, null,
-                LocalDateTime.now(), LocalDateTime.now().plusDays(14), null, BorrowStatus.BORROWED
+                LocalDateTime.now(), LocalDateTime.now().plusDays(14), null, BorrowingStatus.BORROWED
         );
 
         when(borrowingService.borrowBookCopyByBarcode(eq(barcode), any(BorrowBookCopyRequest.class), eq(mockLibrarian))).thenReturn(borrowingDto);
@@ -97,7 +97,7 @@ public class BorrowingControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(borrowingId.toString()))
                 .andExpect(jsonPath("$.data.bookCopyBarcode").value(barcode))
-                .andExpect(jsonPath("$.data.status").value(BorrowStatus.BORROWED.toString()));
+                .andExpect(jsonPath("$.data.status").value(BorrowingStatus.BORROWED.toString()));
     }
 
     @Test
@@ -113,7 +113,7 @@ public class BorrowingControllerIntegrationTest {
                 borrowingId, patronId, "patron@example.com", "Patron", "User",
                 UUID.randomUUID(), barcode, UUID.randomUUID(), "Another Book", "67890",
                 oldLibrarianId, "oldlibrarian@example.com", librarianId, "librarian@example.com",
-                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(9), LocalDateTime.now(), BorrowStatus.RETURNED
+                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(9), LocalDateTime.now(), BorrowingStatus.RETURNED
         );
 
         when(borrowingService.returnBookCopyByBarcode(eq(barcode), any(BorrowReturnRequest.class), eq(mockLibrarian))).thenReturn(borrowingDto);
@@ -126,6 +126,6 @@ public class BorrowingControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(borrowingId.toString()))
                 .andExpect(jsonPath("$.data.bookCopyBarcode").value(barcode))
-                .andExpect(jsonPath("$.data.status").value(BorrowStatus.RETURNED.toString()));
+                .andExpect(jsonPath("$.data.status").value(BorrowingStatus.RETURNED.toString()));
     }
 }

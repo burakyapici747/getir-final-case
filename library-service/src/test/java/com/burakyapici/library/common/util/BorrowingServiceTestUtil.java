@@ -4,8 +4,7 @@ import com.burakyapici.library.api.dto.request.BookAvailabilityUpdateEvent;
 import com.burakyapici.library.api.dto.request.BorrowBookCopyRequest;
 import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
 import com.burakyapici.library.domain.dto.BorrowingDto;
-import com.burakyapici.library.domain.enums.BookCopyStatus;
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import com.burakyapici.library.domain.enums.ReturnType;
 import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.Book;
@@ -14,8 +13,8 @@ import com.burakyapici.library.domain.model.Borrowing;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.model.WaitList;
 import com.burakyapici.library.security.UserDetailsImpl;
-import com.burakyapici.library.service.validation.borrowing.BorrowHandlerRequest;
-import com.burakyapici.library.service.validation.returning.ReturnHandlerRequest;
+import com.burakyapici.library.api.validation.borrowing.BorrowHandlerRequest;
+import com.burakyapici.library.api.validation.returning.ReturnHandlerRequest;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -49,7 +48,7 @@ public class BorrowingServiceTestUtil {
                 .borrowDate(borrowDate)
                 .dueDate(dueDate)
                 .borrowedByStaff(librarian)
-                .status(BorrowStatus.BORROWED)
+                .status(BorrowingStatus.BORROWED)
                 .build();
     }
     
@@ -72,7 +71,7 @@ public class BorrowingServiceTestUtil {
                 .returnDate(returnDate)
                 .borrowedByStaff(librarian)
                 .returnedByStaff(librarian)
-                .status(BorrowStatus.RETURNED)
+                .status(BorrowingStatus.RETURNED)
                 .build();
         
         borrowing.setId(UUID.randomUUID());

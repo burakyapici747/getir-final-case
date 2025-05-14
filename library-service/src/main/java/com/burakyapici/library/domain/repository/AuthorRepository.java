@@ -12,7 +12,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.UUID;
 
 public interface AuthorRepository extends JpaRepository<Author, UUID> {
-    boolean existsByFirstName(String firstName);
     Page<Author> findAll(Specification<Author> specification, Pageable pageable);
 
     @Query(value =

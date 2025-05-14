@@ -11,8 +11,8 @@ import com.burakyapici.library.domain.model.Book;
 import com.burakyapici.library.domain.model.BookCopy;
 import com.burakyapici.library.domain.model.User;
 import com.burakyapici.library.domain.model.WaitList;
-import com.burakyapici.library.service.validation.waitlist.PlaceHoldHandlerRequest;
-import com.burakyapici.library.service.validation.waitlist.cancel.CancelHoldHandlerRequest;
+import com.burakyapici.library.api.validation.waitlist.PlaceHoldHandlerRequest;
+import com.burakyapici.library.api.validation.waitlist.cancel.CancelHoldHandlerRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

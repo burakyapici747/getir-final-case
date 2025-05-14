@@ -1,6 +1,6 @@
 package com.burakyapici.library.domain.model;
 
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,5 +41,5 @@ public class Borrowing extends BaseModel{
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private BorrowStatus status = BorrowStatus.BORROWED;
+    private BorrowingStatus status = BorrowingStatus.BORROWED;
 }

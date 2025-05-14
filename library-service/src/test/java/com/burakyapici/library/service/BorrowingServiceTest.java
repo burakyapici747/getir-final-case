@@ -10,7 +10,7 @@ import com.burakyapici.library.common.util.BorrowingServiceTestUtil;
 import com.burakyapici.library.common.util.UserServiceTestUtil;
 import com.burakyapici.library.domain.dto.BorrowingDto;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import com.burakyapici.library.domain.enums.ReturnType;
 import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.Book;
@@ -21,10 +21,10 @@ import com.burakyapici.library.domain.model.WaitList;
 import com.burakyapici.library.domain.repository.BorrowingRepository;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.impl.BorrowingServiceImpl;
-import com.burakyapici.library.service.validation.borrowing.BorrowHandlerRequest;
-import com.burakyapici.library.service.validation.borrowing.BorrowValidationHandler;
-import com.burakyapici.library.service.validation.returning.ReturnHandlerRequest;
-import com.burakyapici.library.service.validation.returning.ReturnValidationHandler;
+import com.burakyapici.library.api.validation.borrowing.BorrowHandlerRequest;
+import com.burakyapici.library.api.validation.borrowing.BorrowValidationHandler;
+import com.burakyapici.library.api.validation.returning.ReturnHandlerRequest;
+import com.burakyapici.library.api.validation.returning.ReturnValidationHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,7 +117,7 @@ public class BorrowingServiceTest {
         assertEquals(bookCopy.getId(), result.bookCopyId());
         assertEquals(barcode, result.bookCopyBarcode());
         assertEquals(librarianUser.getId(), result.borrowedByStaffId());
-        assertEquals(BorrowStatus.BORROWED, result.status());
+        assertEquals(BorrowingStatus.BORROWED, result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
         verify(userService).getUserByIdOrElseThrow(librarianId);
@@ -173,7 +173,7 @@ public class BorrowingServiceTest {
         assertEquals(bookCopy.getId(), result.bookCopyId());
         assertEquals(barcode, result.bookCopyBarcode());
         assertEquals(librarianUser.getId(), result.borrowedByStaffId());
-        assertEquals(BorrowStatus.BORROWED, result.status());
+        assertEquals(BorrowingStatus.BORROWED, result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
         verify(userService).getUserByIdOrElseThrow(librarianId);
@@ -213,7 +213,7 @@ public class BorrowingServiceTest {
         when(userService.getUserByIdOrElseThrow(librarianId)).thenReturn(librarianUser);
         when(bookCopyService.getBookCopyByBarcodeOrElseThrow(barcode)).thenReturn(bookCopy);
         when(borrowingRepository.findByStatusAndBookCopyBarcodeAndUserId(
-                BorrowStatus.BORROWED.name(), barcode, patronId)).thenReturn(borrowing);
+                BorrowingStatus.BORROWED.name(), barcode, patronId)).thenReturn(borrowing);
         doNothing().when(returnValidationHandler).handle(any(ReturnHandlerRequest.class));
         when(waitListService.getTopByBookIdAndStatusOrderByStartDateAsc(book.getId(), WaitListStatus.WAITING))
                 .thenReturn(Optional.empty());
@@ -232,13 +232,13 @@ public class BorrowingServiceTest {
         assertEquals(barcode, result.bookCopyBarcode());
         assertEquals(librarianUser.getId(), result.borrowedByStaffId());
         assertEquals(librarianUser.getId(), result.returnedByStaffId());
-        assertEquals(ReturnType.NORMAL.getBorrowStatus(), result.status());
+        assertEquals(ReturnType.NORMAL.getBorrowingStatus(), result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
         verify(userService).getUserByIdOrElseThrow(librarianId);
         verify(bookCopyService).getBookCopyByBarcodeOrElseThrow(barcode);
         verify(borrowingRepository).findByStatusAndBookCopyBarcodeAndUserId(
-                BorrowStatus.BORROWED.name(), barcode, patronId);
+                BorrowingStatus.BORROWED.name(), barcode, patronId);
         verify(returnValidationHandler).handle(any(ReturnHandlerRequest.class));
         verify(waitListService).getTopByBookIdAndStatusOrderByStartDateAsc(book.getId(), WaitListStatus.WAITING);
         verify(bookCopyService).saveBookCopy(any(BookCopy.class));
@@ -276,7 +276,7 @@ public class BorrowingServiceTest {
         when(userService.getUserByIdOrElseThrow(librarianId)).thenReturn(librarianUser);
         when(bookCopyService.getBookCopyByBarcodeOrElseThrow(barcode)).thenReturn(bookCopy);
         when(borrowingRepository.findByStatusAndBookCopyBarcodeAndUserId(
-                BorrowStatus.BORROWED.name(), barcode, patronId)).thenReturn(borrowing);
+                BorrowingStatus.BORROWED.name(), barcode, patronId)).thenReturn(borrowing);
         doNothing().when(returnValidationHandler).handle(any(ReturnHandlerRequest.class));
         when(waitListService.getTopByBookIdAndStatusOrderByStartDateAsc(book.getId(), WaitListStatus.WAITING))
                 .thenReturn(Optional.of(waitList));
@@ -296,13 +296,13 @@ public class BorrowingServiceTest {
         assertEquals(barcode, result.bookCopyBarcode());
         assertEquals(librarianUser.getId(), result.borrowedByStaffId());
         assertEquals(librarianUser.getId(), result.returnedByStaffId());
-        assertEquals(ReturnType.NORMAL.getBorrowStatus(), result.status());
+        assertEquals(ReturnType.NORMAL.getBorrowingStatus(), result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
         verify(userService).getUserByIdOrElseThrow(librarianId);
         verify(bookCopyService).getBookCopyByBarcodeOrElseThrow(barcode);
         verify(borrowingRepository).findByStatusAndBookCopyBarcodeAndUserId(
-                BorrowStatus.BORROWED.name(), barcode, patronId);
+                BorrowingStatus.BORROWED.name(), barcode, patronId);
         verify(returnValidationHandler).handle(any(ReturnHandlerRequest.class));
         verify(waitListService).getTopByBookIdAndStatusOrderByStartDateAsc(book.getId(), WaitListStatus.WAITING);
         verify(bookCopyService).saveBookCopy(any(BookCopy.class));
@@ -338,7 +338,7 @@ public class BorrowingServiceTest {
         when(userService.getUserByIdOrElseThrow(librarianId)).thenReturn(librarianUser);
         when(bookCopyService.getBookCopyByBarcodeOrElseThrow(barcode)).thenReturn(bookCopy);
         when(borrowingRepository.findByStatusAndBookCopyBarcodeAndUserId(
-                BorrowStatus.BORROWED.name(), barcode, patronId)).thenReturn(borrowing);
+                BorrowingStatus.BORROWED.name(), barcode, patronId)).thenReturn(borrowing);
         doNothing().when(returnValidationHandler).handle(any(ReturnHandlerRequest.class));
         when(bookCopyService.saveBookCopy(any(BookCopy.class))).thenReturn(bookCopy);
         when(borrowingRepository.save(any(Borrowing.class))).thenReturn(borrowing);
@@ -355,13 +355,13 @@ public class BorrowingServiceTest {
         assertEquals(barcode, result.bookCopyBarcode());
         assertEquals(librarianUser.getId(), result.borrowedByStaffId());
         assertEquals(librarianUser.getId(), result.returnedByStaffId());
-        assertEquals(ReturnType.DAMAGED.getBorrowStatus(), result.status());
+        assertEquals(ReturnType.DAMAGED.getBorrowingStatus(), result.status());
         
         verify(userService).getUserByIdOrElseThrow(patronId);
         verify(userService).getUserByIdOrElseThrow(librarianId);
         verify(bookCopyService).getBookCopyByBarcodeOrElseThrow(barcode);
         verify(borrowingRepository).findByStatusAndBookCopyBarcodeAndUserId(
-                BorrowStatus.BORROWED.name(), barcode, patronId);
+                BorrowingStatus.BORROWED.name(), barcode, patronId);
         verify(returnValidationHandler).handle(any(ReturnHandlerRequest.class));
         verify(bookCopyService).saveBookCopy(any(BookCopy.class));
         verify(borrowingRepository).save(any(Borrowing.class));

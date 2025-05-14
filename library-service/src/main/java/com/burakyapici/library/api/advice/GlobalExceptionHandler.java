@@ -140,19 +140,33 @@ public class GlobalExceptionHandler {
             .body(pd);
     }
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ProblemDetail> handleAllUncaught(Exception ex) {
-//        ProblemDetail pd = createProblemDetail(
-//            HttpStatus.INTERNAL_SERVER_ERROR,
-//            "An unexpected error occurred",
-//            "internal-server-error",
-//            "Internal Server Error"
-//        );
-//        return ResponseEntity
-//            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-//            .body(pd);
-//    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ProblemDetail> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ProblemDetail pd = createProblemDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage(),
+            "illegal-argument",
+            "Illegal Argument"
+        );
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(pd);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleAllUncaught(Exception ex) {
+        ProblemDetail pd = createProblemDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "An unexpected error occurred",
+            "internal-server-error",
+            "Internal Server Error"
+        );
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(pd);
+    }
 
     private ProblemDetail createProblemDetail(
         HttpStatus status,

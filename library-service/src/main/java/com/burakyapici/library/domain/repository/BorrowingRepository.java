@@ -1,7 +1,7 @@
 package com.burakyapici.library.domain.repository;
 
 import com.burakyapici.library.domain.model.Borrowing;
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -62,5 +62,5 @@ public interface BorrowingRepository extends JpaRepository<Borrowing, UUID> {
     List<Borrowing> findAllByUserId(UUID userId);
 
     @Query("SELECT b FROM Borrowing b WHERE b.status = :status AND b.dueDate < :dateTime")
-    List<Borrowing> findAllByStatusAndDueDateBefore(@Param("status") BorrowStatus status, @Param("dateTime") LocalDateTime dateTime);
+    List<Borrowing> findAllByStatusAndDueDateBefore(@Param("status") BorrowingStatus status, @Param("dateTime") LocalDateTime dateTime);
 }

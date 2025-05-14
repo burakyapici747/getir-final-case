@@ -6,7 +6,7 @@ import com.burakyapici.library.api.dto.request.BorrowReturnRequest;
 import com.burakyapici.library.common.mapper.BorrowMapper;
 import com.burakyapici.library.domain.dto.BorrowingDto;
 import com.burakyapici.library.domain.enums.BookCopyStatus;
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import com.burakyapici.library.domain.enums.ReturnType;
 import com.burakyapici.library.domain.enums.WaitListStatus;
 import com.burakyapici.library.domain.model.*;
@@ -16,10 +16,10 @@ import com.burakyapici.library.service.BookCopyService;
 import com.burakyapici.library.service.BorrowingService;
 import com.burakyapici.library.service.UserService;
 import com.burakyapici.library.service.WaitListService;
-import com.burakyapici.library.service.validation.borrowing.BorrowHandlerRequest;
-import com.burakyapici.library.service.validation.borrowing.BorrowValidationHandler;
-import com.burakyapici.library.service.validation.returning.ReturnHandlerRequest;
-import com.burakyapici.library.service.validation.returning.ReturnValidationHandler;
+import com.burakyapici.library.api.validation.borrowing.BorrowHandlerRequest;
+import com.burakyapici.library.api.validation.borrowing.BorrowValidationHandler;
+import com.burakyapici.library.api.validation.returning.ReturnHandlerRequest;
+import com.burakyapici.library.api.validation.returning.ReturnValidationHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,7 +101,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         Book book = bookCopy.getBook();
 
         Borrowing borrowing = borrowingRepository.findByStatusAndBookCopyBarcodeAndUserId(
-            BorrowStatus.BORROWED.name(),
+            BorrowingStatus.BORROWED.name(),
             barcode,
             patron.getId()
         );
@@ -117,7 +117,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         LocalDateTime returnDateTime = LocalDateTime.now();
 
         borrowing.setReturnDate(returnDateTime);
-        borrowing.setStatus(borrowReturnRequest.returnType().getBorrowStatus());
+        borrowing.setStatus(borrowReturnRequest.returnType().getBorrowingStatus());
         borrowing.setReturnedByStaff(librarian);
 
         Borrowing savedBorrowing = borrowingRepository.save(borrowing);
@@ -176,11 +176,11 @@ public class BorrowingServiceImpl implements BorrowingService {
     @Override
     public void processOverdueBorrowings() {
         LocalDateTime now = LocalDateTime.now();
-        List<Borrowing> overdueBorrowings = borrowingRepository.findAllByStatusAndDueDateBefore(BorrowStatus.BORROWED, now);
+        List<Borrowing> overdueBorrowings = borrowingRepository.findAllByStatusAndDueDateBefore(BorrowingStatus.BORROWED, now);
 
         if (overdueBorrowings != null && !overdueBorrowings.isEmpty()) {
             for (Borrowing borrowing : overdueBorrowings) {
-                borrowing.setStatus(BorrowStatus.OVERDUE);
+                borrowing.setStatus(BorrowingStatus.OVERDUE);
             }
             borrowingRepository.saveAll(overdueBorrowings);
             // Loglama eklenebilir: "Processed N overdue borrowings."
@@ -232,7 +232,7 @@ public class BorrowingServiceImpl implements BorrowingService {
             .borrowDate(borrowDate)
             .dueDate(dueDate)
             .borrowedByStaff(librarian)
-            .status(BorrowStatus.BORROWED)
+            .status(BorrowingStatus.BORROWED)
             .build();
     }
 

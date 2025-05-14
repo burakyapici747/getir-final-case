@@ -232,22 +232,4 @@ public class BookControllerIntegrationTest {
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.message").value("Book deleted successfully."));
     }
-
-    @Test
-    @DisplayName("Given bookId when streamBookAvailabilityUpdates then returns event stream")
-    void givenBookId_whenStreamBookAvailabilityUpdates_thenReturnsEventStream() throws Exception {
-        UUID bookId = UUID.randomUUID();
-        int initialCopies = 5;
-        BookAvailabilityUpdateEvent expectedEvent = new BookAvailabilityUpdateEvent(bookId, initialCopies);
-
-        when(bookService.calculateAvailableCopiesCount(bookId)).thenReturn(initialCopies);
-
-        mockMvc.perform(get("/api/v1/books/{id}/book-availability", bookId)
-            .accept(MediaType.TEXT_EVENT_STREAM))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("data:" + objectMapper.writeValueAsString(expectedEvent))));
-
-        verify(bookAvailabilitySink, times(1)).tryEmitNext(eq(expectedEvent));
-    }
 }

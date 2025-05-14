@@ -23,7 +23,7 @@
 		<jjwt.version>0.12.6</jjwt.version>
 		<oauth2.resource.server.version>3.4.5</oauth2.resource.server.version>
 		<oauth2.jose.version>6.4.5</oauth2.jose.version>
-		<open.api.version>2.3.0</open.api.version>
+		<open.api.version>2.8.6</open.api.version>
 	</properties>
 
 	<dependencyManagement>

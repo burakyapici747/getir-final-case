@@ -7,7 +7,7 @@ import com.burakyapici.library.domain.dto.BorrowingDto;
 import com.burakyapici.library.domain.dto.PageableDto;
 import com.burakyapici.library.domain.dto.UserDetailDto;
 import com.burakyapici.library.domain.dto.UserDto;
-import com.burakyapici.library.domain.enums.BorrowStatus;
+import com.burakyapici.library.domain.enums.BorrowingStatus;
 import com.burakyapici.library.domain.enums.PatronStatus;
 import com.burakyapici.library.security.UserDetailsImpl;
 import com.burakyapici.library.service.BorrowingService;
@@ -147,7 +147,7 @@ public class UserControllerIntegrationTest {
         setupAuthentication(mockPatron);
         UUID borrowingId = UUID.randomUUID();
         List<BorrowingDto> borrowings = Collections.singletonList(
-                new BorrowingDto(borrowingId, patronId, "patron@example.com", "Patron", "User", UUID.randomUUID(), "BC-001", UUID.randomUUID(), "Test Book", "ISBN123", UUID.randomUUID(), "Librarian", null, null, LocalDateTime.now(), LocalDateTime.now().plusDays(14), null, BorrowStatus.BORROWED)
+                new BorrowingDto(borrowingId, patronId, "patron@example.com", "Patron", "User", UUID.randomUUID(), "BC-001", UUID.randomUUID(), "Test Book", "ISBN123", UUID.randomUUID(), "Librarian", null, null, LocalDateTime.now(), LocalDateTime.now().plusDays(14), null, BorrowingStatus.BORROWED)
         );
 
         when(borrowingService.getCurrentUserBorrowings(patronId)).thenReturn(borrowings);
@@ -168,7 +168,7 @@ public class UserControllerIntegrationTest {
         UUID userIdToFetchBorrowings = UUID.randomUUID();
         UUID borrowingId = UUID.randomUUID();
         List<BorrowingDto> borrowings = Collections.singletonList(
-                new BorrowingDto(borrowingId, userIdToFetchBorrowings, "user@borrow.com", "Borrow", "User", UUID.randomUUID(), "BC-002", UUID.randomUUID(), "Another Book", "ISBN456", UUID.randomUUID(), "Librarian", null, null, LocalDateTime.now(), LocalDateTime.now().plusDays(10), null, BorrowStatus.BORROWED)
+                new BorrowingDto(borrowingId, userIdToFetchBorrowings, "user@borrow.com", "Borrow", "User", UUID.randomUUID(), "BC-002", UUID.randomUUID(), "Another Book", "ISBN456", UUID.randomUUID(), "Librarian", null, null, LocalDateTime.now(), LocalDateTime.now().plusDays(10), null, BorrowingStatus.BORROWED)
         );
 
         when(borrowingService.getUserBorrowingsById(userIdToFetchBorrowings)).thenReturn(borrowings);
